@@ -1,0 +1,300 @@
+/* ============================================================
+   IKBAR BARBERSHOP — Global Design System
+   Palet: Monokrom (Putih, Abu-abu, Hitam)
+   Tipografi: Outfit (heading) + Jost (body)
+   ============================================================ */
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Color Tokens — Monochrome */
+  --color-black:      #0A0A0A;
+  --color-dark:       #111111;
+  --color-dark-soft:  #1A1A1A;
+  --color-mid:        #2A2A2A;
+  --color-border:     #333333;
+  --color-gray-dim:   #555555;
+  --color-gray:       #888888;
+  --color-gray-light: #BBBBBB;
+  --color-silver:     #D4D4D4;
+  --color-off-white:  #F0F0F0;
+  --color-white:      #FFFFFF;
+
+  /* Semantic */
+  --bg-primary:       var(--color-dark);
+  --bg-surface:       var(--color-dark-soft);
+  --bg-elevated:      var(--color-mid);
+  --text-primary:     var(--color-white);
+  --text-secondary:   var(--color-gray-light);
+  --text-muted:       var(--color-gray);
+  --border-color:     var(--color-border);
+  --accent:           var(--color-white);
+
+  /* Typography */
+  --font-heading:  'Outfit', sans-serif;
+  --font-body:     'Jost', sans-serif;
+
+  /* Spacing */
+  --section-pad-y: clamp(80px, 10vw, 140px);
+  --container-max: 1200px;
+  --container-pad: clamp(20px, 5vw, 60px);
+
+  /* Transitions */
+  --transition-fast:   150ms ease;
+  --transition-base:   250ms ease;
+  --transition-slow:   400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--color-dark); }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-gray); }
+
+/* ── Typography Scale ── */
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+h1 { font-size: clamp(48px, 8vw, 100px); }
+h2 { font-size: clamp(36px, 5vw, 64px); }
+h3 { font-size: clamp(22px, 3vw, 32px); }
+h4 { font-size: clamp(18px, 2.5vw, 24px); }
+
+p {
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.7;
+}
+
+/* ── Container ── */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--container-pad);
+}
+
+/* ── Section Base ── */
+.section {
+  padding-block: var(--section-pad-y);
+}
+
+/* ── Label / Overline ── */
+.overline {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.overline::before {
+  content: '';
+  display: block;
+  width: 24px;
+  height: 1px;
+  background: var(--color-gray);
+}
+
+/* ── Divider ── */
+.divider {
+  width: 40px;
+  height: 2px;
+  background: var(--color-white);
+  margin-block: 20px;
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background var(--transition-base), color var(--transition-base), transform var(--transition-base), box-shadow var(--transition-base);
+  white-space: nowrap;
+  user-select: none;
+  padding: 16px 36px;
+}
+
+.btn-primary {
+  background: var(--color-white);
+  color: var(--color-black);
+}
+.btn-primary:hover {
+  background: var(--color-off-white);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(255,255,255,0.15);
+}
+.btn-primary:active { transform: translateY(0); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-white);
+  border: 1px solid var(--color-border);
+  padding: 14px 34px;
+}
+.btn-ghost:hover {
+  border-color: var(--color-white);
+  background: rgba(255,255,255,0.05);
+  transform: translateY(-2px);
+}
+
+/* ── Noise Texture Overlay ── */
+.noise {
+  position: relative;
+}
+.noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ── Grid helpers ── */
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+
+@media (max-width: 768px) {
+  .grid-2 { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .grid-3 { grid-template-columns: 1fr; }
+}
+
+/* ── Lightbox ── */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.96);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.lightbox-overlay img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 2px;
+}
+.lightbox-close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  background: var(--color-mid);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--transition-base);
+  color: var(--color-white);
+}
+.lightbox-close:hover { background: var(--color-border); }
+
+/* ── Prose ── */
+.prose {
+  color: var(--text-secondary);
+  font-size: clamp(15px, 1.6vw, 17px);
+  max-width: 60ch;
+}
+
+/* ── Tag badge ── */
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-border);
+  border-radius: 100px;
+  color: var(--text-muted);
+}
+
+/* ── Card ── */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color var(--transition-base), transform var(--transition-slow);
+  cursor: pointer;
+}
+.card:hover {
+  border-color: var(--color-gray);
+  transform: translateY(-4px);
+}
+
+/* ── Map / Embed ── */
+.map-wrapper {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+  filter: grayscale(1) contrast(1.1) brightness(0.8);
+  transition: filter var(--transition-slow);
+}
+.map-wrapper:hover { filter: grayscale(0.5) contrast(1) brightness(1); }
+
+/* ── Selection color ── */
+::selection { background: rgba(255,255,255,0.15); }
+
+/* ── Focus visible ── */
+:focus-visible {
+  outline: 2px solid var(--color-white);
+  outline-offset: 3px;
+}
+
+/* ── prefers-reduced-motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@import './components.css';
