@@ -311,7 +311,7 @@ function Hero() {
           transition={{ delay: 0.3, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className="hero-eyebrow-line" />
-          <span className="hero-eyebrow-text">Berdiri Sejak .... · Warisan Keluarga</span>
+          <span className="hero-eyebrow-text">Berdiri Sejak 2024 · Warisan Keluarga</span>
         </motion.div>
 
         <motion.h1
@@ -426,7 +426,7 @@ function About() {
                 viewport={{ once: true }}
                 transition={{ delay: 0.4, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               >
-                <div className="year">2023</div>
+                <div className="year">2024</div>
                 <div className="since">Berdiri</div>
               </motion.div>
             </div>
@@ -448,7 +448,7 @@ function About() {
             <motion.p variants={fadeUp} className="prose">
               Ikbar Barbershop lahir dari passion yang sudah mengalir dalam darah —
               keahlian memotong rambut yang diwariskan turun-temurun dari keluarga.
-              Sejak 2023, kami hadir dengan konsep yang berbeda: setiap pelanggan berhak
+              Sejak 2024, kami hadir dengan konsep yang berbeda: setiap pelanggan berhak
               mendapat sesi konsultasi personal sebelum gunting menyentuh rambut.
             </motion.p>
             <motion.p variants={fadeUp} className="prose" style={{ marginTop: '16px' }}>

@@ -145,6 +145,8 @@
   position: absolute;
   border: 1px solid rgba(255,255,255,0.04);
   pointer-events: none;
+  /* Prevent contributing to overflow */
+  overflow: hidden;
 }
 .hero-geo-1 {
   width: 300px; height: 300px;
@@ -173,9 +175,12 @@
 }
 .hero-title {
   font-family: var(--font-heading); font-weight: 900;
-  font-size: clamp(60px, 11vw, 130px);
+  font-size: clamp(48px, 11vw, 130px);
   line-height: 0.9; letter-spacing: -0.03em;
   color: var(--color-white); margin-bottom: 32px;
+  /* Prevent overflow on narrow screens */
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 .hero-title span {
   display: block; color: var(--color-gray);
@@ -238,15 +243,17 @@
   border-radius: 2px; pointer-events: none;
 }
 .about-accent-box {
-  position: absolute; bottom: -20px; right: -20px;
-  width: 160px; height: 160px;
+  position: absolute; bottom: -20px; right: -10px;
+  width: 120px; height: 120px;
   background: var(--bg-elevated); border: 1px solid var(--color-border);
   border-radius: 4px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  text-align: center; padding: 16px;
+  text-align: center; padding: 12px;
+  /* Don't overflow the visual container */
+  max-width: calc(100% - 16px);
 }
 .about-accent-box .year {
-  font-family: var(--font-heading); font-size: 48px; font-weight: 900;
+  font-family: var(--font-heading); font-size: 36px; font-weight: 900;
   color: var(--color-white); line-height: 1;
 }
 .about-accent-box .since {
@@ -299,9 +306,10 @@
   letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5;
 }
 .barber-name {
-  font-family: var(--font-heading); font-size: clamp(40px, 5vw, 70px);
+  font-family: var(--font-heading); font-size: clamp(32px, 5vw, 70px);
   font-weight: 900; letter-spacing: -0.02em;
   margin-block: 16px 8px; color: var(--color-white);
+  word-break: break-word;
 }
 .barber-title {
   font-family: var(--font-body); font-size: 14px; letter-spacing: 0.2em;
@@ -333,6 +341,8 @@
 @media (max-width: 768px) {
   .barber-inner { grid-template-columns: 1fr; }
   .barber-content { order: 0; }
+  .barber-visual { max-width: 100%; width: 100%; overflow: hidden; }
+  .barber-photo { max-width: 100%; }
 }
 
 /* ── Keunggulan v2 — 21st.dev Noise Card pattern ── */
@@ -530,9 +540,15 @@
   letter-spacing: 0.1em;
 }
 @media (max-width: 600px) {
-  .lightbox-v2-prev { left: -10px; }
-  .lightbox-v2-next { right: -10px; }
+  .lightbox-v2-prev { left: 4px; }
+  .lightbox-v2-next { right: 4px; }
   .lightbox-v2-close { top: -48px; }
+  .lightbox-v2-content { max-width: 100vw; padding-inline: 0; }
+  .lightbox-v2-media img, .lightbox-v2-media video {
+    max-width: 100vw;
+    max-height: 70vh;
+  }
+  .lightbox-v2-info { bottom: -60px; flex-direction: column; gap: 6px; }
 }
 
 /* ── Video Section ── */
@@ -700,7 +716,10 @@
   transition: filter var(--transition-slow);
 }
 .map-wrapper:hover { filter: grayscale(0.4) contrast(1) brightness(0.95); }
-@media (max-width: 768px) { .lokasi-grid { grid-template-columns: 1fr; } }
+@media (max-width: 768px) {
+  .lokasi-grid { grid-template-columns: 1fr; }
+  .map-wrapper { aspect-ratio: 3/2; max-width: 100%; }
+}
 
 /* ── Kontak / CTA ── */
 .kontak { background: var(--color-white); border-top: 1px solid var(--color-silver); }
@@ -756,10 +775,34 @@
 .footer-links a:hover { color: var(--color-white); }
 
 /* ── WhatsApp Float ── */
-.wa-float { position: fixed; bottom: 28px; right: 28px; z-index: 900; }
+.wa-float {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 900;
+  /* iOS safe area support */
+  bottom: max(28px, env(safe-area-inset-bottom, 28px));
+  right: max(20px, env(safe-area-inset-right, 20px));
+}
 .wa-btn {
   width: 56px; height: 56px; border-radius: 50%;
   background: #25D366; display: flex; align-items: center; justify-content: center;
   box-shadow: 0 4px 24px rgba(37, 211, 102, 0.45); cursor: pointer;
   text-decoration: none;
+}
+
+/* ── Mobile-first overflow guard ── */
+@media (max-width: 480px) {
+  .hero-geo { display: none; }
+  .hero-lines { display: none; }
+  .hero-scroll-indicator { display: none; }
+  .about-accent-box {
+    right: 8px;
+    bottom: -12px;
+    width: 90px; height: 90px;
+  }
+  .about-accent-box .year { font-size: 28px; }
+  .barber-signature { right: 8px; bottom: 8px; }
+  .wa-float { bottom: 20px; right: 16px; }
+  .hero-title { font-size: clamp(44px, 13vw, 80px); }
 }
