@@ -1,6 +1,22 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo, createContext, useContext } from 'react'
 import { motion, AnimatePresence, useInView, useScroll, useTransform } from 'framer-motion'
 import './components.css'
+import { supabase } from './lib/supabase'
+
+// ─── Site Data Context ─────────────────────────────────────────────────────
+const SiteDataCtx = createContext(null)
+function useSiteData() { return useContext(SiteDataCtx) }
+function useWA() {
+  const d = useSiteData()
+  const num = d?.kontak?.wa_number || '6283110071825'
+  const ig = d?.kontak?.instagram || 'dinasti.barbershop'
+  return {
+    link: (msg) => `https://wa.me/${num}?text=${encodeURIComponent(msg)}`,
+    igUrl: `https://www.instagram.com/${ig}/`,
+    number: num,
+    ig,
+  }
+}
 
 // ─── Framer Motion Variants ──────────────────────────────────
 const fadeUp = {
@@ -165,6 +181,7 @@ const NAV_LINKS = [
 ]
 
 function Navbar() {
+  const { link, igUrl } = useWA()
   const [scrolled, setScrolled] = useState(false)
   const [activeId, setActiveId] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
@@ -225,7 +242,7 @@ function Navbar() {
           </ul>
           <div className="navbar-cta">
             <a
-              href="https://wa.me/6283110071825?text=Halo%20Ikbar%2C%20saya%20mau%20tanya-tanya%20soal%20gaya%20rambut%20nih%20%F0%9F%98%8A"
+              href={link('Halo Ikbar, saya mau tanya-tanya soal gaya rambut nih 😊')}
               className="btn btn-primary"
               style={{ padding: '10px 22px', fontSize: '12px' }}
               target="_blank"
@@ -270,7 +287,7 @@ function Navbar() {
               ))}
             </ul>
             <motion.a
-              href="https://wa.me/6283110071825?text=Halo%20Ikbar%2C%20saya%20mau%20tanya-tanya%20soal%20gaya%20rambut%20nih%20%F0%9F%98%8A"
+              href={link('Halo Ikbar, saya mau tanya-tanya soal gaya rambut nih 😊')}
               className="btn btn-primary"
               target="_blank"
               rel="noopener noreferrer"
@@ -291,6 +308,7 @@ function Navbar() {
 
 // ─── HERO ───────────────────────────────────────────────────────────────────
 function Hero() {
+  const { link } = useWA()
   const { scrollYProgress } = useScroll()
   const heroOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0])
   const heroY = useTransform(scrollYProgress, [0, 0.25], [0, -80])
@@ -341,7 +359,7 @@ function Hero() {
           transition={{ delay: 0.78, duration: 0.6 }}
         >
           <motion.a
-            href="https://wa.me/6283110071825?text=Halo%20Ikbar%2C%20saya%20mau%20tanya-tanya%20soal%20gaya%20rambut%20nih%20%F0%9F%98%8A"
+            href={link('Halo Ikbar, saya mau tanya-tanya soal gaya rambut nih 😊')}
             className="btn btn-primary"
             target="_blank"
             rel="noopener noreferrer"
@@ -404,6 +422,8 @@ function Hero() {
 
 // ─── TENTANG / ABOUT ────────────────────────────────────────────────────────
 function About() {
+  const siteData = useSiteData()
+  const aboutImgSrc = siteData?.about?.image_url || '/assets/about-new.jpg'
   return (
     <section className="section about" id="tentang">
       <div className="container">
@@ -412,7 +432,7 @@ function About() {
             <div className="about-visual">
               <div className="about-image-frame">
                 <img
-                  src="/assets/about-new.jpg"
+                  src={aboutImgSrc}
                   alt="Seni Cukur Warisan Keluarga — Ikbar Barbershop"
                   loading="lazy"
                 />
@@ -483,6 +503,9 @@ function About() {
 
 // ─── BARBER PROFILE ─────────────────────────────────────────────────────────
 function BarberProfile() {
+  const siteData = useSiteData()
+  const { link } = useWA()
+  const barberPhotoSrc = siteData?.barber?.photo_url || '/assets/barber-ikbar.jpg'
   return (
     <section className="section barber" id="barber">
       <div className="container">
@@ -527,7 +550,7 @@ function BarberProfile() {
 
             <motion.div variants={fadeUp} style={{ marginTop: '36px' }}>
               <motion.a
-                href="https://wa.me/6283110071825?text=Halo%20Ikbar%2C%20boleh%20tanya-tanya%20soal%20potongan%20rambut%20yang%20cocok%20buat%20saya%3F%20%F0%9F%98%8A"
+                href={link('Halo Ikbar, boleh tanya-tanya soal potongan rambut yang cocok buat saya? 😊')}
                 className="btn btn-primary"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -543,7 +566,7 @@ function BarberProfile() {
             <div className="barber-visual">
               <div className="barber-photo">
                 <img
-                  src="/assets/barber-ikbar.jpg"
+                  src={barberPhotoSrc}
                   alt="Ikbar Kamil — Head Barber & Founder Ikbar Barbershop"
                   loading="lazy"
                   style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center' }}
@@ -661,14 +684,16 @@ const GALLERY_ITEMS = [
 ]
 
 function Gallery() {
+  const siteData = useSiteData()
+  const galleryItems = siteData?.galleryItems ?? GALLERY_ITEMS
   const [selectedIndex, setSelectedIndex] = useState(null)
   const [filter, setFilter] = useState('Semua')
 
   const categories = ['Semua', 'Foto', 'Video']
 
   const filteredItems = useMemo(() =>
-    filter === 'Semua' ? GALLERY_ITEMS : GALLERY_ITEMS.filter(i => i.category === filter),
-    [filter]
+    filter === 'Semua' ? galleryItems : galleryItems.filter(i => i.category === filter),
+    [filter, galleryItems]
   )
 
   // Keyboard navigation in lightbox
@@ -885,6 +910,8 @@ function Gallery() {
 
 // ─── VIDEO SECTION ──────────────────────────────────────────────────────────
 function VideoSection() {
+  const siteData = useSiteData()
+  const videoSrc = siteData?.video?.video_url || '/assets/main-video.mp4'
   const videoRef = useRef(null)
   const [playing, setPlaying] = useState(false)
 
@@ -917,7 +944,7 @@ function VideoSection() {
           <div className="video-wrapper">
             <video
               ref={videoRef}
-              src="/assets/main-video.mp4"
+              src={videoSrc}
               controls={playing}
               playsInline
               preload="metadata"
@@ -1019,6 +1046,11 @@ function ServiceCard({ title, items, isHighlight = false, showCta = false, ctaTe
 }
 
 function Services() {
+  const siteData = useSiteData()
+  const { link } = useWA()
+  const servicesUtama = siteData?.servicesUtama ?? SERVICES_UTAMA
+  const servicesTambahan = siteData?.servicesTambahan ?? SERVICES_TAMBAHAN
+  const ctaHrefTambahan = link('Halo Ikbar, mau tanya soal layanan tambahan yang tersedia dong 😊')
   return (
     <section className="section services" id="layanan">
       <div className="container">
@@ -1049,7 +1081,7 @@ function Services() {
           <motion.div variants={fadeUp}>
             <ServiceCard
               title="Style Cukuran"
-              items={SERVICES_UTAMA}
+              items={servicesUtama}
               showCta={false}
               footerNote="Style yang kamu inginkan tidak ada di sini? Konsultasi langsung via WhatsApp — kami siap bantu!"
             />
@@ -1057,11 +1089,11 @@ function Services() {
           <motion.div variants={fadeUp}>
             <ServiceCard
               title="Layanan Tambahan"
-              items={SERVICES_TAMBAHAN}
+              items={servicesTambahan}
               isHighlight={true}
               showCta={true}
               ctaText="Tanyakan Langsung ke IKBAR"
-              ctaHref="https://wa.me/6283110071825?text=Halo%20Ikbar%2C%20mau%20tanya%20soal%20layanan%20tambahan%20yang%20tersedia%20dong%20%F0%9F%98%8A"
+              ctaHref={ctaHrefTambahan}
             />
           </motion.div>
         </motion.div>
@@ -1081,12 +1113,24 @@ function Services() {
 
 // ─── LOKASI & JAM OPERASIONAL ────────────────────────────────────────────────
 const JAM_DATA = [
-  { hari: 'Senin – Jumat', jam: '16:00 – 21:00' },
-  { hari: 'Sabtu', jam: '10:00 – 21:00' },
-  { hari: 'Minggu', jam: '10:00 – 21:00' },
+  { hari: 'Senin – Jumat', jam: '16:00 – 21:00', tutup: false },
+  { hari: 'Sabtu', jam: '10:00 – 21:00', tutup: false },
+  { hari: 'Minggu', jam: '10:00 – 21:00', tutup: false },
 ]
 
+const DEFAULT_MAPS = 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3962.8571484108!2d108.6207527!3d-7.0142682!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e6f0d7ed5745415%3A0x9215bf4cf9c8ba8f!2sToko%20Iwan!5e0!3m2!1sid!2sid!4v1700000000000!5m2!1sid!2sid'
+
 function Lokasi() {
+  const siteData = useSiteData()
+  const lokasiData = siteData?.lokasi || {}
+  const kontakData = siteData?.kontak || {}
+  const jamData = lokasiData.hours_data?.length ? lokasiData.hours_data : JAM_DATA
+  const address = lokasiData.address || 'XJPF+78W, Jl. Raya Luragung - Kuningan, Margasari, Kec. Luragung, Kabupaten Kuningan, Jawa Barat 45581'
+  const mapsUrl = lokasiData.maps_url || DEFAULT_MAPS
+  const waNumber = kontakData.wa_number || '6283110071825'
+  const igHandle = kontakData.instagram || 'dinasti.barbershop'
+  const waFormatted = '+' + waNumber.replace(/^62/, '62 ').replace(/(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3')
+
   return (
     <section className="section lokasi" id="lokasi">
       <div className="container">
@@ -1105,9 +1149,9 @@ function Lokasi() {
 
             <motion.div className="lokasi-address" variants={stagger(0.1)}>
               {[
-                { icon: <IconMap />, label: 'Alamat', value: 'XJPF+78W, Jl. Raya Luragung - Kuningan, Margasari, Kec. Luragung, Kabupaten Kuningan, Jawa Barat 45581' },
-                { icon: <IconPhone />, label: 'WhatsApp', value: '+62 831-1007-1825' },
-                { icon: <IconInstagram />, label: 'Instagram', value: '@dinasti.barbershop' },
+                { icon: <IconMap />, label: 'Alamat', value: address },
+                { icon: <IconPhone />, label: 'WhatsApp', value: waFormatted },
+                { icon: <IconInstagram />, label: 'Instagram', value: '@' + igHandle },
               ].map((row, i) => (
                 <motion.div className="lokasi-row" key={i} variants={fadeUp}>
                   <div className="lokasi-icon">{row.icon}</div>
@@ -1121,7 +1165,7 @@ function Lokasi() {
 
             <motion.div className="jam-box" variants={fadeUp}>
               <h3><IconClock size={14} /> Jam Operasional</h3>
-              {JAM_DATA.map((j, i) => (
+              {jamData.map((j, i) => (
                 <motion.div
                   className="jam-row"
                   key={i}
@@ -1131,7 +1175,7 @@ function Lokasi() {
                   transition={{ delay: 0.1 + i * 0.1 }}
                 >
                   <span className="jam-day">{j.hari}</span>
-                  <span className="jam-time">{j.jam}</span>
+                  <span className="jam-time">{j.tutup ? 'Tutup' : j.jam}</span>
                 </motion.div>
               ))}
             </motion.div>
@@ -1141,7 +1185,7 @@ function Lokasi() {
             <div className="map-wrapper">
               <iframe
                 title="Lokasi Ikbar Barbershop"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3962.8571484108!2d108.6207527!3d-7.0142682!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e6f0d7ed5745415%3A0x9215bf4cf9c8ba8f!2sToko%20Iwan!5e0!3m2!1sid!2sid!4v1700000000000!5m2!1sid!2sid"
+                src={mapsUrl}
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
@@ -1160,6 +1204,11 @@ function Lokasi() {
 
 // ─── KONTAK / CTA AKHIR ──────────────────────────────────────────────────────
 function Kontak() {
+  const siteData = useSiteData()
+  const waNum = siteData?.kontak?.wa_number || '6283110071825'
+  const igHandle = siteData?.kontak?.instagram || 'dinasti.barbershop'
+  const waHref = `https://wa.me/${waNum}?text=${encodeURIComponent('Halo Ikbar, boleh konsultasi soal potongan rambut yang cocok buat saya? 😊')}`
+  const igHref = `https://www.instagram.com/${igHandle}/`
   return (
     <section className="kontak" id="kontak">
       <div className="kontak-inner">
@@ -1183,7 +1232,7 @@ function Kontak() {
         <Reveal delay={0.3}>
           <div className="kontak-actions">
             <motion.a
-              href="https://wa.me/6283110071825?text=Halo%20Ikbar%2C%20boleh%20konsultasi%20soal%20potongan%20rambut%20yang%20cocok%20buat%20saya%3F%20%F0%9F%98%8A"
+              href={waHref}
               className="btn-kontak-primary"
               target="_blank"
               rel="noopener noreferrer"
@@ -1194,7 +1243,7 @@ function Kontak() {
               Tanya ke IKBAR via WA
             </motion.a>
             <motion.a
-              href="https://www.instagram.com/dinasti.barbershop/"
+              href={igHref}
               className="btn-kontak-ghost"
               target="_blank"
               rel="noopener noreferrer"
@@ -1210,7 +1259,7 @@ function Kontak() {
         <Reveal delay={0.4}>
           <div className="kontak-socials">
             <motion.a
-              href="https://wa.me/6283110071825?text=Halo%20Ikbar%2C%20boleh%20konsultasi%20soal%20potongan%20rambut%20yang%20cocok%20buat%20saya%3F%20%F0%9F%98%8A"
+              href={waHref}
               className="kontak-social-link"
               target="_blank"
               rel="noopener noreferrer"
@@ -1221,7 +1270,7 @@ function Kontak() {
               <IconWA size={20} fill="black" />
             </motion.a>
             <motion.a
-              href="https://www.instagram.com/dinasti.barbershop/"
+              href={igHref}
               className="kontak-social-link"
               target="_blank"
               rel="noopener noreferrer"
@@ -1271,6 +1320,7 @@ function Footer() {
 
 // ─── WHATSAPP FLOAT BUTTON ───────────────────────────────────────────────────
 function WAFloat() {
+  const { link } = useWA()
   const [visible, setVisible] = useState(false)
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 2000)
@@ -1288,7 +1338,7 @@ function WAFloat() {
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         >
           <motion.a
-            href="https://wa.me/6283110071825?text=Halo%20Ikbar%2C%20boleh%20konsultasi%20soal%20potongan%20rambut%20yang%20cocok%20buat%20saya%3F%20%F0%9F%98%8A"
+            href={link('Halo Ikbar, boleh konsultasi soal potongan rambut yang cocok buat saya? 😊')}
             className="wa-btn"
             target="_blank"
             rel="noopener noreferrer"
@@ -1306,8 +1356,39 @@ function WAFloat() {
 
 // ─── APP ─────────────────────────────────────────────────────────────────────
 export default function App() {
+  const [siteData, setSiteData] = useState(null)
+
+  useEffect(() => {
+    if (!supabase) return // No Supabase config → use hardcoded fallbacks
+    Promise.all([
+      supabase.from('gallery_items').select('*').order('sort_order', { ascending: true }),
+      supabase.from('services').select('*').order('sort_order', { ascending: true }),
+      supabase.from('site_content')
+        .select('section, content')
+        .in('section', ['lokasi', 'kontak', 'barber', 'about', 'video']),
+    ]).then(([gallery, services, content]) => {
+      const contentMap = {}
+      for (const row of (content.data || [])) contentMap[row.section] = row.content
+      const allSvc = services.data || []
+      setSiteData({
+        galleryItems: gallery.data?.length ? gallery.data : null,
+        servicesUtama: allSvc.filter(s => s.category === 'utama').length
+          ? allSvc.filter(s => s.category === 'utama') : null,
+        servicesTambahan: allSvc.filter(s => s.category === 'tambahan').length
+          ? allSvc.filter(s => s.category === 'tambahan') : null,
+        lokasi: contentMap.lokasi || null,
+        kontak: contentMap.kontak || null,
+        barber: contentMap.barber || null,
+        about: contentMap.about || null,
+        video: contentMap.video || null,
+      })
+    }).catch(() => {
+      // Silently fail — landing page uses hardcoded fallbacks
+    })
+  }, [])
+
   return (
-    <>
+    <SiteDataCtx.Provider value={siteData}>
       <Navbar />
       <main>
         <Hero />
@@ -1322,6 +1403,6 @@ export default function App() {
       </main>
       <Footer />
       <WAFloat />
-    </>
+    </SiteDataCtx.Provider>
   )
 }

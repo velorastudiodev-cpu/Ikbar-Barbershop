@@ -1,8 +1,11 @@
+@import './components.css';
+
 /* ============================================================
    IKBAR BARBERSHOP — Global Design System
    Palet: Monokrom (Putih, Abu-abu, Hitam)
    Tipografi: Outfit (heading) + Jost (body)
    ============================================================ */
+
 
 *, *::before, *::after {
   margin: 0;
@@ -309,4 +312,3 @@ p {
   }
 }
 
-@import './components.css';
