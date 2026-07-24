@@ -2,16 +2,35 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 
 /**
- * proxy.js — Next.js 16+ route protection (menggantikan middleware.js)
+ * proxy.js — Next.js 16+ route protection
  * Memproteksi semua route /dashboard/* dengan cek sesi Supabase.
  */
 export async function proxy(request) {
+  const { pathname } = request.nextUrl
+
+  // Guard: jika env vars tidak ada, jangan crash — log dan lanjut
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error(
+      '[proxy] MISSING ENV VARS:',
+      'NEXT_PUBLIC_SUPABASE_URL=', supabaseUrl ? 'SET' : 'MISSING',
+      'NEXT_PUBLIC_SUPABASE_ANON_KEY=', supabaseKey ? 'SET' : 'MISSING'
+    )
+    // Redirect ke login supaya tidak crash total
+    if (pathname.startsWith('/dashboard')) {
+      const loginUrl = request.nextUrl.clone()
+      loginUrl.pathname = '/login'
+      return NextResponse.redirect(loginUrl)
+    }
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll()
@@ -26,28 +45,33 @@ export async function proxy(request) {
           )
         },
       },
+    })
+
+    // Refresh session
+    const { data: { user }, error } = await supabase.auth.getUser()
+
+    if (error) {
+      console.error('[proxy] supabase.auth.getUser() error:', error.message)
     }
-  )
 
-  // Refresh session (PENTING — jangan hapus ini)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+    // Redirect ke /login jika belum login dan mencoba akses /dashboard
+    if (!user && pathname.startsWith('/dashboard')) {
+      const loginUrl = request.nextUrl.clone()
+      loginUrl.pathname = '/login'
+      return NextResponse.redirect(loginUrl)
+    }
 
-  const { pathname } = request.nextUrl
+    // Redirect ke /dashboard jika sudah login dan mengakses /login
+    if (user && pathname === '/login') {
+      const dashboardUrl = request.nextUrl.clone()
+      dashboardUrl.pathname = '/dashboard'
+      return NextResponse.redirect(dashboardUrl)
+    }
 
-  // Redirect ke /login jika belum login dan mencoba akses /dashboard
-  if (!user && pathname.startsWith('/dashboard')) {
-    const loginUrl = request.nextUrl.clone()
-    loginUrl.pathname = '/login'
-    return NextResponse.redirect(loginUrl)
-  }
-
-  // Redirect ke /dashboard jika sudah login dan mengakses /login
-  if (user && pathname === '/login') {
-    const dashboardUrl = request.nextUrl.clone()
-    dashboardUrl.pathname = '/dashboard'
-    return NextResponse.redirect(dashboardUrl)
+  } catch (err) {
+    console.error('[proxy] UNCAUGHT ERROR:', err?.message, err?.stack)
+    // Jangan crash — biarkan request lanjut
+    return NextResponse.next({ request })
   }
 
   return supabaseResponse
@@ -55,12 +79,6 @@ export async function proxy(request) {
 
 export const config = {
   matcher: [
-    /*
-     * Jalankan proxy di semua path KECUALI:
-     * - _next/static (static files)
-     * - _next/image (image optimization)
-     * - favicon.ico, file gambar
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
