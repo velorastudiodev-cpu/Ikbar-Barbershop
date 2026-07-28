@@ -2,7 +2,7 @@
 
 import { useState, useActionState, useEffect, useRef } from 'react'
 import {
-  updateSiteContent, uploadFile,
+  updateSiteContent,
   addGalleryItem, deleteGalleryItem,
   addService, updateService, deleteService,
 } from '@/app/actions/cms'
@@ -29,6 +29,7 @@ function Toast({ msg, type = 'success', onClose }) {
       padding: '10px 16px', borderRadius: 'var(--radius-md)',
       fontSize: 13, fontWeight: 500, boxShadow: '0 8px 32px rgba(0,0,0,.5)',
       animation: 'slideUpToast .25s ease',
+      maxWidth: 'calc(100vw - 32px)',
     }}>
       {type === 'success' ? <IconCheck size={14} /> : <IconX size={14} />}
       {msg}
@@ -52,41 +53,80 @@ function ConfirmModal({ message, onConfirm, onCancel }) {
 }
 
 // ─── Upload Zone ──────────────────────────────────────────────────────
+// Menggunakan XMLHttpRequest agar bisa tracking progress upload secara real-time
+// (Server Action tidak bisa melaporkan upload progress — stuck di 85%)
 function UploadZone({ accept, onUploaded, folder, label, hint }) {
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState(null)
   const inputRef = useRef(null)
 
-  const handleFile = async (file) => {
+  const handleFile = (file) => {
     if (!file) return
     setError(null)
     setUploading(true)
-    setProgress(10)
+    setProgress(0)
 
     const fd = new FormData()
     fd.append('file', file)
     fd.append('folder', folder)
 
-    // Simulasi progress
-    const interval = setInterval(() => setProgress(p => Math.min(p + 15, 85)), 300)
+    // Gunakan XMLHttpRequest agar upload progress bisa dilaporkan real-time
+    const xhr = new XMLHttpRequest()
 
-    const result = await uploadFile(null, fd)
-    clearInterval(interval)
-    setProgress(100)
-
-    if (result.error) {
-      setError(result.error)
-      setUploading(false)
-      setProgress(0)
-      return
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        // Maks 90% untuk upload phase — sisa 10% untuk proses server (Supabase)
+        const pct = Math.round((e.loaded / e.total) * 90)
+        setProgress(pct)
+      }
     }
 
-    setTimeout(() => {
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const result = JSON.parse(xhr.responseText)
+          if (result.error) {
+            setError(result.error)
+            setUploading(false)
+            setProgress(0)
+          } else {
+            setProgress(100)
+            setTimeout(() => {
+              setUploading(false)
+              setProgress(0)
+              onUploaded(result.url, result.path)
+            }, 400)
+          }
+        } catch {
+          setError('Gagal memproses respons server')
+          setUploading(false)
+          setProgress(0)
+        }
+      } else {
+        let errMsg = 'Upload gagal'
+        try { errMsg = JSON.parse(xhr.responseText)?.error || errMsg } catch {}
+        setError(errMsg)
+        setUploading(false)
+        setProgress(0)
+      }
+    }
+
+    xhr.onerror = () => {
+      setError('Koneksi terputus. Coba lagi.')
       setUploading(false)
       setProgress(0)
-      onUploaded(result.url, result.path)
-    }, 400)
+    }
+
+    xhr.ontimeout = () => {
+      setError('Upload timeout. File terlalu besar atau koneksi lambat.')
+      setUploading(false)
+      setProgress(0)
+    }
+
+    xhr.timeout = 120000 // 2 menit timeout
+    xhr.open('POST', '/api/upload')
+    xhr.send(fd)
   }
 
   return (
@@ -105,7 +145,9 @@ function UploadZone({ accept, onUploaded, folder, label, hint }) {
 
       {uploading ? (
         <div>
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 10 }}>Mengupload... {progress}%</div>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 10 }}>
+            Mengupload... {progress}%
+          </div>
           <div style={{ height: 4, background: 'var(--bg-active)', borderRadius: 2, overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${progress}%`, background: 'var(--success)', transition: 'width .3s ease', borderRadius: 2 }} />
           </div>
@@ -536,17 +578,17 @@ function TabJam({ siteContent, onToast }) {
       <div className="panel-body">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
           {hours.map((h, i) => (
-            <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '12px 14px', background: 'var(--bg-hover)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+            <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '10px 12px', background: 'var(--bg-hover)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', flexWrap: 'wrap' }}>
               <input
                 className="form-input"
-                style={{ flex: 1, maxWidth: 180 }}
+                style={{ flex: '1 1 140px', minWidth: 120 }}
                 value={h.hari}
                 onChange={e => updateHour(i, 'hari', e.target.value)}
                 placeholder="Misal: Senin – Jumat"
               />
               <input
                 className="form-input"
-                style={{ flex: 1, maxWidth: 160 }}
+                style={{ flex: '1 1 120px', minWidth: 100 }}
                 value={h.jam}
                 onChange={e => updateHour(i, 'jam', e.target.value)}
                 disabled={h.tutup}
@@ -619,7 +661,7 @@ function TabFoto({ siteContent, onToast }) {
         <div key={section} className="panel">
           <div className="panel-header"><div className="panel-title">{label}</div></div>
           <div className="panel-body">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16 }}>
               <div>
                 <div className="form-label" style={{ marginBottom: 8 }}>Foto Saat Ini</div>
                 <img src={current} alt="" style={{ width: '100%', aspectRatio: '3/4', objectFit: 'cover', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }} onError={e => { e.target.style.display = 'none' }} />
@@ -671,8 +713,8 @@ export default function WebsiteClient({ initialGallery, initialServices, siteCon
     <>
       <style>{`
         @keyframes slideUpToast { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
-        .tab-nav { display:flex; gap:4px; padding:4px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-md); width:fit-content; margin-bottom:20px; flex-wrap:wrap; }
-        .tab-btn { padding:7px 16px; border-radius:8px; font-size:12.5px; font-weight:500; color:var(--text-muted); transition:all .15s; cursor:pointer; background:none; border:none; }
+        .tab-nav { display:flex; gap:4px; padding:4px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius-md); margin-bottom:20px; flex-wrap:wrap; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        .tab-btn { padding:7px 14px; border-radius:8px; font-size:12.5px; font-weight:500; color:var(--text-muted); transition:all .15s; cursor:pointer; background:none; border:none; white-space:nowrap; flex-shrink:0; }
         .tab-btn:hover { color:var(--text-secondary); }
         .tab-btn.active { background:var(--bg-active); color:var(--text-primary); }
         .data-table { width:100%; border-collapse:collapse; font-size:13px; }
@@ -685,7 +727,7 @@ export default function WebsiteClient({ initialGallery, initialServices, siteCon
         .btn-icon-danger:hover { color:var(--error); border-color:rgba(248,113,113,.3); background:var(--error-dim); }
         .form-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; }
         .btn-danger { background:var(--error-dim)!important; color:var(--error)!important; border:1px solid rgba(248,113,113,.3)!important; }
-        @media(max-width:640px) { .form-row { grid-template-columns:1fr; } }
+        @media(max-width:640px) { .form-row { grid-template-columns:1fr; } .tab-btn { padding:6px 10px; font-size:11.5px; } }
       `}</style>
 
       {/* Header */}
@@ -696,7 +738,7 @@ export default function WebsiteClient({ initialGallery, initialServices, siteCon
         </div>
         <div className="dashboard-header-right">
           <a
-            href="http://localhost:5173"
+            href="/"
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-ghost"
