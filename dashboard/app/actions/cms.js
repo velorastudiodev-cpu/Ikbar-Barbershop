@@ -46,14 +46,6 @@ export async function uploadFile(prevState, formData) {
 
   const BUCKET = 'site-media'
 
-  // Auto-buat bucket jika belum ada
-  const { data: buckets } = await supabase.storage.listBuckets()
-  const bucketExists = buckets?.some(b => b.name === BUCKET)
-  if (!bucketExists) {
-    const { error: createErr } = await supabase.storage.createBucket(BUCKET, { public: true })
-    if (createErr) return { error: `Gagal buat bucket: ${createErr.message}` }
-  }
-
   // Generate nama unik
   const ext = file.name.split('.').pop()
   const timestamp = Date.now()
