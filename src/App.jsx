@@ -242,7 +242,7 @@ function Navbar() {
           </ul>
           <div className="navbar-cta">
             <a
-              href={link('Halo Ikbar, saya mau tanya-tanya soal gaya rambut nih 😊')}
+              href={link('Halo Ikbar, saya mau tanya-tanya soal gaya rambut nih')}
               className="btn btn-primary"
               style={{ padding: '10px 22px', fontSize: '12px' }}
               target="_blank"
@@ -287,7 +287,7 @@ function Navbar() {
               ))}
             </ul>
             <motion.a
-              href={link('Halo Ikbar, saya mau tanya-tanya soal gaya rambut nih 😊')}
+              href={link('Halo Ikbar, saya mau tanya-tanya soal gaya rambut nih')}
               className="btn btn-primary"
               target="_blank"
               rel="noopener noreferrer"
@@ -359,7 +359,7 @@ function Hero() {
           transition={{ delay: 0.78, duration: 0.6 }}
         >
           <motion.a
-            href={link('Halo Ikbar, saya mau tanya-tanya soal gaya rambut nih 😊')}
+            href={link('Halo Ikbar, saya mau tanya-tanya soal gaya rambut nih')}
             className="btn btn-primary"
             target="_blank"
             rel="noopener noreferrer"
@@ -550,7 +550,7 @@ function BarberProfile() {
 
             <motion.div variants={fadeUp} style={{ marginTop: '36px' }}>
               <motion.a
-                href={link('Halo Ikbar, boleh tanya-tanya soal potongan rambut yang cocok buat saya? 😊')}
+                href={link('Halo Ikbar, boleh tanya-tanya soal potongan rambut yang cocok buat saya?')}
                 className="btn btn-primary"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -1050,7 +1050,7 @@ function Services() {
   const { link } = useWA()
   const servicesUtama = siteData?.servicesUtama ?? SERVICES_UTAMA
   const servicesTambahan = siteData?.servicesTambahan ?? SERVICES_TAMBAHAN
-  const ctaHrefTambahan = link('Halo Ikbar, mau tanya soal layanan tambahan yang tersedia dong 😊')
+  const ctaHrefTambahan = link('Halo Ikbar, mau tanya soal layanan tambahan yang tersedia dong')
   return (
     <section className="section services" id="layanan">
       <div className="container">
@@ -1207,7 +1207,7 @@ function Kontak() {
   const siteData = useSiteData()
   const waNum = siteData?.kontak?.wa_number || '6283110071825'
   const igHandle = siteData?.kontak?.instagram || 'dinasti.barbershop'
-  const waHref = `https://wa.me/${waNum}?text=${encodeURIComponent('Halo Ikbar, boleh konsultasi soal potongan rambut yang cocok buat saya? 😊')}`
+  const waHref = `https://wa.me/${waNum}?text=${encodeURIComponent('Halo Ikbar, boleh konsultasi soal potongan rambut yang cocok buat saya?')}`
   const igHref = `https://www.instagram.com/${igHandle}/`
   return (
     <section className="kontak" id="kontak">
@@ -1338,7 +1338,7 @@ function WAFloat() {
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
         >
           <motion.a
-            href={link('Halo Ikbar, boleh konsultasi soal potongan rambut yang cocok buat saya? 😊')}
+            href={link('Halo Ikbar, boleh konsultasi soal potongan rambut yang cocok buat saya?')}
             className="wa-btn"
             target="_blank"
             rel="noopener noreferrer"
