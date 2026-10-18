@@ -1157,7 +1157,9 @@ function Lokasi() {
   const lokasiData = siteData?.lokasi || {}
   const kontakData = siteData?.kontak || {}
   const jamData = lokasiData.hours_data?.length ? lokasiData.hours_data : JAM_DATA
-  const address = lokasiData.address || 'XJPF+78W, Jl. Raya Luragung - Kuningan, Margasari, Kec. Luragung, Kabupaten Kuningan, Jawa Barat 45581'
+  const address = lokasiData.address && !/ikbar|isi alamat/i.test(lokasiData.address)
+    ? lokasiData.address
+    : 'XJPF+78W, Jl. Raya Luragung - Kuningan, Margasari, Kec. Luragung, Kabupaten Kuningan, Jawa Barat 45581'
   const mapsUrl = lokasiData.maps_url && !/Toko Iwan|Ikbar/i.test(lokasiData.maps_url)
     ? lokasiData.maps_url
     : DEFAULT_MAPS
@@ -1427,12 +1429,19 @@ export default function App() {
       const contentMap = {}
       for (const row of (content.data || [])) contentMap[row.section] = row.content
       const allSvc = services.data || []
+      const renameBrand = value => typeof value === 'string'
+        ? value.replace(/ikbar/gi, 'Dinasti')
+        : value
       setSiteData({
-        galleryItems: gallery.data?.length ? gallery.data : null,
+        galleryItems: gallery.data?.length
+          ? gallery.data.map(item => ({ ...item, alt: renameBrand(item.alt) }))
+          : null,
         servicesUtama: allSvc.filter(s => s.category === 'utama').length
-          ? allSvc.filter(s => s.category === 'utama') : null,
+          ? allSvc.filter(s => s.category === 'utama').map(item => ({ ...item, desc: renameBrand(item.desc), price: renameBrand(item.price) }))
+          : null,
         servicesTambahan: allSvc.filter(s => s.category === 'tambahan').length
-          ? allSvc.filter(s => s.category === 'tambahan') : null,
+          ? allSvc.filter(s => s.category === 'tambahan').map(item => ({ ...item, desc: renameBrand(item.desc), price: renameBrand(item.price) }))
+          : null,
         lokasi: contentMap.lokasi || null,
         kontak: contentMap.kontak || null,
         barber: contentMap.barber || null,
