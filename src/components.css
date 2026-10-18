@@ -280,7 +280,8 @@
   .service-card-name { font-size: 1.06rem; }
   .service-card-desc { font-size: .77rem; }
   .map-wrapper, .map-wrapper iframe { min-height: 330px; }
-  .wa-chat-label { display: none; }
+  .wa-float { flex-direction: column-reverse; align-items: flex-end; gap: 6px; }
+  .wa-chat-label { display: block; white-space: nowrap; }
   .kontak { padding-inline: var(--gutter); }
   .kontak-inner { padding: 0; }
   .kontak-actions .btn-kontak-primary, .kontak-actions .btn-kontak-ghost { width: 100%; }
