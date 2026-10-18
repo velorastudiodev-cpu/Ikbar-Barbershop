@@ -2,14 +2,14 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 :root {
-  --obsidian: #11100E;
-  --espresso: #1A1815;
-  --leather: #24201C;
-  --alabaster: #F4EFE6;
-  --sand: #A69F91;
-  --brass: #C89D66;
-  --brass-hover: #DFB782;
-  --hairline: rgba(200,157,102,.22);
+  --obsidian: #111214;
+  --espresso: #1B1D20;
+  --leather: #26292D;
+  --alabaster: #F4F5F6;
+  --sand: #AEB2B8;
+  --brass: #D5D8DC;
+  --brass-hover: #FFFFFF;
+  --hairline: rgba(220,224,229,.22);
   --ready: #34D399;
   --body: 'Plus Jakarta Sans', sans-serif;
   --display: 'Playfair Display', Georgia, serif;
@@ -29,7 +29,7 @@ a { color: inherit; }
 :focus-visible { outline: 2px solid var(--brass-hover); outline-offset: 4px; }
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--obsidian); }
-::-webkit-scrollbar-thumb { background: #493d30; border-radius: 999px; }
+::-webkit-scrollbar-thumb { background: #62676e; border-radius: 999px; }
 
 h1, h2, h3, h4, h5 { margin: 0; font-family: var(--display); font-weight: 600; line-height: 1.04; letter-spacing: -.035em; }
 h1 { font-size: clamp(3.2rem, 7.8vw, 7.35rem); }
