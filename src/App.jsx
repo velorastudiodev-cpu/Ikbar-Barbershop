@@ -308,7 +308,9 @@ function Navbar() {
 
 // ─── HERO ───────────────────────────────────────────────────────────────────
 function Hero() {
+  const siteData = useSiteData()
   const { link } = useWA()
+  const heroImageSrc = siteData?.galleryItems?.find(item => item.type === 'image')?.src || '/assets/gallery-new-1.jpg'
   const { scrollYProgress } = useScroll()
   const heroOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0])
   const heroY = useTransform(scrollYProgress, [0, 0.25], [0, -80])
@@ -401,6 +403,16 @@ function Hero() {
             <span className="hero-trust-lbl">Konsultasi Gratis</span>
           </div>
         </motion.div>
+      </motion.div>
+
+      <motion.div
+        className="hero-visual"
+        initial={{ opacity: 0, y: 28, scale: .97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ delay: .55, duration: .8, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <img src={heroImageSrc} alt="Hasil cukuran Ikbar Barbershop" />
+        <div className="hero-visual-note">Konsultasi personal<br /><strong>sebelum gunting</strong></div>
       </motion.div>
 
       <motion.div
@@ -547,6 +559,12 @@ function BarberProfile() {
                 "Rambut yang bagus dimulai dari percakapan yang baik."</em> Itulah mengapa
               konsultasi selalu menjadi langkah pertama di setiap sesi.
             </motion.p>
+
+            <motion.div className="barber-specialties" variants={fadeUp}>
+              {['Precision fade & taper', 'Classic scissor cut', 'Korean perm & styling'].map(skill => (
+                <span key={skill}>{skill}</span>
+              ))}
+            </motion.div>
 
             <motion.div variants={fadeUp} style={{ marginTop: '36px' }}>
               <motion.a
@@ -989,12 +1007,13 @@ const SERVICES_UTAMA = [
   { name: 'Buzz Cut', desc: 'Serba pendek merata — tampilan simpel & bersih', price: 'Rp 25.000' },
 ]
 const SERVICES_TAMBAHAN = [
-  { name: 'Perming', desc: 'Stytle permin ala Korea memaksimalkan rambut bervolume — tanya langsung ke Ikbar', price: 'Tanya Ikbar', highlight: true },
+  { name: 'Perming', desc: 'Style perming ala Korea untuk memaksimalkan tekstur dan volume rambut — konsultasikan langsung dengan Ikbar', price: 'Tanya Ikbar', highlight: true },
   { name: 'Creambath', desc: 'Perawatan rambut + pijat kepala relaksasi — tanya langsung ke Ikbar', price: 'Tanya Ikbar' },
   { name: 'Blow Dry & Styling', desc: 'Pengeringan & penataan gaya rambut akhir — tanya langsung ke Ikbar', price: 'Tanya Ikbar' },
 ]
 
 function ServiceCard({ title, items, isHighlight = false, showCta = false, ctaText, ctaHref, footerNote }) {
+  const { link } = useWA()
   return (
     <motion.div
       className={`service-card-v2${isHighlight ? ' service-card-highlight' : ''}`}
@@ -1016,9 +1035,19 @@ function ServiceCard({ title, items, isHighlight = false, showCta = false, ctaTe
             </div>
             <div className="service-card-info">
               <span className="service-card-name">{item.name}</span>
-              <span className="service-card-desc">{item.desc}</span>
+              <span className="service-card-desc">{item.desc?.replace(/Stytle permin/gi, 'Style perming')}</span>
             </div>
             <span className="service-card-price">{item.price}</span>
+            {isHighlight && (
+              <a
+                className="service-item-cta"
+                href={link(`Halo Ikbar, saya mau tanya estimasi untuk ${item.name}`)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Tanya
+              </a>
+            )}
           </li>
         ))}
       </ul>
@@ -1122,6 +1151,7 @@ const DEFAULT_MAPS = 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3962
 
 function Lokasi() {
   const siteData = useSiteData()
+  const [clockTick, setClockTick] = useState(Date.now())
   const lokasiData = siteData?.lokasi || {}
   const kontakData = siteData?.kontak || {}
   const jamData = lokasiData.hours_data?.length ? lokasiData.hours_data : JAM_DATA
@@ -1130,6 +1160,20 @@ function Lokasi() {
   const waNumber = kontakData.wa_number || '6283110071825'
   const igHandle = kontakData.instagram || 'dinasti.barbershop'
   const waFormatted = '+' + waNumber.replace(/^62/, '62 ').replace(/(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3')
+  useEffect(() => {
+    const timer = window.setInterval(() => setClockTick(Date.now()), 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
+  const jakartaParts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Jakarta', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(new Date(clockTick))
+  const weekday = jakartaParts.find(part => part.type === 'weekday')?.value
+  const hour = Number(jakartaParts.find(part => part.type === 'hour')?.value || 0)
+  const minute = Number(jakartaParts.find(part => part.type === 'minute')?.value || 0)
+  const isWeekend = weekday === 'Sat' || weekday === 'Sun'
+  const openingHour = isWeekend ? 10 : 16
+  const isOpen = hour >= openingHour && (hour < 21 || (hour === 20 && minute < 60))
+  const openStatusLabel = isOpen ? 'Sedang buka hari ini' : `Tutup — buka kembali pukul ${openingHour}:00`
 
   return (
     <section className="section lokasi" id="lokasi">
@@ -1164,6 +1208,10 @@ function Lokasi() {
             </motion.div>
 
             <motion.div className="jam-box" variants={fadeUp}>
+              <div className={`open-status${isOpen ? '' : ' closed'}`}>
+                <span className="open-status-dot" />
+                {openStatusLabel}
+              </div>
               <h3><IconClock size={14} /> Jam Operasional</h3>
               {jamData.map((j, i) => (
                 <motion.div
