@@ -1187,7 +1187,7 @@ function Lokasi() {
             viewport={{ once: true, margin: '-60px 0px' }}
           >
             <motion.span className="overline" variants={fadeUp}>Temukan Kami</motion.span>
-            <motion.h2 variants={fadeUp} style={{ marginTop: '20px', marginBottom: '0' }}>
+            <motion.h2 variants={fadeUp} style={{ marginTop: '20px' }}>
               Lokasi &<br />Jam Buka
             </motion.h2>
 
