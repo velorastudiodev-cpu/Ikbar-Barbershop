@@ -226,7 +226,7 @@ function Navbar() {
       >
         <div className="navbar-inner">
           <span className="navbar-logo" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} role="button" tabIndex={0}>
-            <img className="brand-logo" src="/assets/logo-dinasti.svg" alt="Logo Warisan Keluarga Dinasti Barbershop - Ikbar Barbershop Kuningan" />
+            <img className="brand-logo" src="/assets/logo-dinasti.png" alt="Logo Warisan Keluarga Dinasti Barbershop - Ikbar Barbershop Kuningan" />
           </span>
           <ul className="navbar-nav">
             {NAV_LINKS.map(l => (
@@ -1364,7 +1364,7 @@ function Footer() {
     <footer className="footer">
       <div className="footer-inner">
         <span className="footer-logo">
-          <img className="brand-logo" src="/assets/logo-dinasti.svg" alt="Logo Warisan Keluarga Dinasti Barbershop - Ikbar Barbershop Kuningan" />
+          <img className="brand-logo" src="/assets/logo-dinasti.png" alt="Logo Warisan Keluarga Dinasti Barbershop - Ikbar Barbershop Kuningan" />
         </span>
         <ul className="footer-links">
           {NAV_LINKS.map(l => (
