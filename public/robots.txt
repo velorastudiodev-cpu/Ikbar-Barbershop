@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /edit
+Disallow: /login
+Disallow: /cms
+Disallow: /api
+
+Sitemap: https://ikbar-barbershop.vercel.app/sitemap.xml

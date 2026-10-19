@@ -216,26 +216,25 @@ function Navbar() {
   }
 
   return (
-    <>
+    <header className="site-header">
       <motion.nav
         className={`navbar${scrolled ? ' scrolled' : ''}`}
+        aria-label="Navigasi Utama"
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
       >
         <div className="navbar-inner">
           <span className="navbar-logo" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} role="button" tabIndex={0}>
-            <img className="brand-logo" src="/assets/logo-dinasti.png" alt="Dinasti Barbershop" />
+            <img className="brand-logo" src="/assets/logo-dinasti.svg" alt="Logo Warisan Keluarga Dinasti Barbershop - Ikbar Barbershop Kuningan" />
           </span>
           <ul className="navbar-nav">
             {NAV_LINKS.map(l => (
               <li key={l.id}>
                 <a
+                  href={`#${l.id}`}
                   className={activeId === l.id ? 'active' : ''}
-                  onClick={() => scrollTo(l.id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={e => e.key === 'Enter' && scrollTo(l.id)}
+                  onClick={e => { e.preventDefault(); scrollTo(l.id) }}
                 >
                   {l.label}
                 </a>
@@ -283,8 +282,7 @@ function Navbar() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <a onClick={() => scrollTo(l.id)} role="button" tabIndex={0}
-                    onKeyDown={e => e.key === 'Enter' && scrollTo(l.id)}>{l.label}</a>
+                  <a href={`#${l.id}`} onClick={e => { e.preventDefault(); scrollTo(l.id) }}>{l.label}</a>
                 </motion.li>
               ))}
             </ul>
@@ -304,7 +302,7 @@ function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </header>
   )
 }
 
@@ -318,7 +316,7 @@ function Hero() {
   const heroY = useTransform(scrollYProgress, [0, 0.25], [0, -80])
 
   return (
-    <section className="hero noise" id="hero">
+    <section className="hero noise" id="beranda" aria-labelledby="hero-heading">
       <div className="hero-bg" />
       <div className="hero-lines" />
       {/* Geometric accent shapes */}
@@ -337,13 +335,14 @@ function Hero() {
         </motion.div>
 
         <motion.h1
+          id="hero-heading"
           className="hero-title"
           initial={{ opacity: 0, y: 70 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         >
           DINASTI
-          <span>Barbershop</span>
+          <span>Barbershop · Cukur Rambut Pria di Luragung, Kuningan</span>
         </motion.h1>
 
         <motion.p
@@ -413,7 +412,7 @@ function Hero() {
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ delay: .55, duration: .8, ease: [0.22, 1, 0.36, 1] }}
       >
-        <img src={heroImageSrc} alt="Hasil cukuran Dinasti Barbershop" />
+        <img src={heroImageSrc} alt="Hasil cukur rambut pria di Ikbar Barbershop Luragung Kuningan" loading="eager" fetchPriority="high" decoding="async" />
         <div className="hero-visual-note">Konsultasi personal<br /><strong>sebelum gunting</strong></div>
       </motion.div>
 
@@ -439,7 +438,7 @@ function About() {
   const siteData = useSiteData()
   const aboutImgSrc = siteData?.about?.image_url || '/assets/about-new.jpg'
   return (
-    <section className="section about" id="tentang">
+    <section className="section about" id="tentang" aria-labelledby="about-heading">
       <div className="container">
         <div className="about-grid">
           <Reveal variants={slideLeft}>
@@ -476,8 +475,8 @@ function About() {
             <motion.div variants={fadeUp}>
               <span className="overline">Tentang Kami</span>
             </motion.div>
-            <motion.h2 variants={fadeUp} style={{ marginBlock: '20px 24px' }}>
-              Seni Cukur<br />Warisan Keluarga
+            <motion.h2 id="about-heading" variants={fadeUp} style={{ marginBlock: '20px 24px' }}>
+              Seni Cukur<br />Warisan Keluarga Sejak 2024
             </motion.h2>
             <motion.p variants={fadeUp} className="prose">
               Dinasti Barbershop lahir dari passion yang sudah mengalir dalam darah —
@@ -521,7 +520,7 @@ function BarberProfile() {
   const { link } = useWA()
   const barberPhotoSrc = siteData?.barber?.photo_url || '/assets/barber-ikbar.jpg'
   return (
-    <section className="section barber" id="barber">
+    <section className="section barber" id="barber" aria-labelledby="barber-heading">
       <div className="container">
         <div className="barber-inner">
           <motion.div
@@ -532,8 +531,8 @@ function BarberProfile() {
             viewport={{ once: true, margin: '-80px 0px' }}
           >
             <motion.span className="overline" variants={fadeUp}>Profil Barber</motion.span>
-            <motion.h2 className="barber-name" variants={fadeUp}>Dinasti Kamil</motion.h2>
-            <motion.p className="barber-title" variants={fadeUp}>Head Barber & Founder · Dinasti Barbershop</motion.p>
+            <motion.h2 id="barber-heading" className="barber-name" variants={fadeUp}>Ikbar Kamil</motion.h2>
+            <motion.p className="barber-title" variants={fadeUp}>Head Barber & Founder · Ikbar Barbershop</motion.p>
 
             <motion.div className="barber-stats" variants={fadeUp}>
               {[
@@ -551,9 +550,9 @@ function BarberProfile() {
             </motion.div>
 
             <motion.p className="barber-bio" variants={fadeUp}>
-              Dinasti bukan hanya seorang barber — ia adalah penerus tradisi keluarga yang
+              Ikbar bukan hanya seorang barber — ia adalah penerus tradisi keluarga yang
               telah berpengalaman dalam seni memotong rambut. Dengan pendekatan yang sabar
-              dan teliti, Dinasti memastikan setiap pelanggan meninggalkan kursinya dengan
+              dan teliti, Ikbar memastikan setiap pelanggan meninggalkan kursinya dengan
               rasa percaya diri yang lebih tinggi.
             </motion.p>
             <motion.p className="barber-bio" variants={fadeUp} style={{ marginBottom: 0 }}>
@@ -570,7 +569,7 @@ function BarberProfile() {
 
             <motion.div variants={fadeUp} style={{ marginTop: '36px' }}>
               <motion.a
-                href={link('Halo Dinasti, boleh tanya-tanya soal potongan rambut yang cocok buat saya?')}
+                href={link('Halo Ikbar, boleh tanya-tanya soal potongan rambut yang cocok buat saya?')}
                 className="btn btn-primary"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -587,8 +586,11 @@ function BarberProfile() {
               <div className="barber-photo">
                 <img
                   src={barberPhotoSrc}
-                  alt="Dinasti Kamil — Head Barber & Founder Dinasti Barbershop"
+                  alt="Ikbar Kamil Master Barber di Ikbar Barbershop Luragung Kuningan"
                   loading="lazy"
+                  decoding="async"
+                  width="900"
+                  height="1600"
                   style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center' }}
                 />
               </div>
@@ -618,7 +620,7 @@ function KeunggulanCard({ item, index }) {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-60px 0px' })
   return (
-    <motion.div
+    <motion.li
       ref={ref}
       className="keunggulan-card-v2"
       initial={{ opacity: 0, y: 40, scale: 0.96 }}
@@ -649,13 +651,13 @@ function KeunggulanCard({ item, index }) {
 
       {/* Bottom shimmer on hover */}
       <div className="keunggulan-card-shimmer" />
-    </motion.div>
+    </motion.li>
   )
 }
 
 function Keunggulan() {
   return (
-    <section className="section keunggulan" id="keunggulan">
+    <section className="section keunggulan" id="keunggulan" aria-labelledby="why-heading">
       <div className="container">
         <div className="keunggulan-header">
           <motion.div
@@ -665,7 +667,7 @@ function Keunggulan() {
             viewport={{ once: true, margin: '-60px 0px' }}
           >
             <motion.span className="overline" variants={fadeUp}>Keunggulan</motion.span>
-            <motion.h2 variants={fadeUp} style={{ marginTop: '20px' }}>
+            <motion.h2 id="why-heading" variants={fadeUp} style={{ marginTop: '20px' }}>
               Kenapa Pilih<br />Dinasti Barbershop?
             </motion.h2>
           </motion.div>
@@ -676,11 +678,11 @@ function Keunggulan() {
           </Reveal>
         </div>
 
-        <div className="keunggulan-grid-v2">
+        <ol className="keunggulan-grid-v2">
           {KEUNGGULAN_DATA.map((item, i) => (
             <KeunggulanCard key={i} item={item} index={i} />
           ))}
-        </div>
+        </ol>
       </div>
     </section>
   )
@@ -702,6 +704,9 @@ const GALLERY_ITEMS = [
   { src: '/assets/gallery-new-vid-3.mp4', type: 'video', alt: 'Aksi Dinasti Barbershop — Video 6', category: 'Video' },
   { src: '/assets/gallery-new-vid-4.mp4', type: 'video', alt: 'Aksi Dinasti Barbershop — Video 7', category: 'Video' },
 ]
+
+const mediaAlt = (item, index) => item.title || item.description || item.alt ||
+  `Hasil Cukur Rambut Pria di Ikbar Barbershop Luragung Kuningan - Portofolio #${index + 1}`
 
 function Gallery() {
   const siteData = useSiteData()
@@ -743,7 +748,7 @@ function Gallery() {
   const handleNext = (e) => { e.stopPropagation(); setSelectedIndex(i => (i + 1) % filteredItems.length) }
 
   return (
-    <section className="section gallery" id="galeri">
+    <section className="section gallery" id="galeri" aria-labelledby="gallery-heading">
       <div className="container">
         {/* Header */}
         <motion.div
@@ -754,7 +759,7 @@ function Gallery() {
           viewport={{ once: true, margin: '-60px 0px' }}
         >
           <motion.span className="overline" variants={fadeUp}>Portofolio</motion.span>
-          <motion.h2 variants={fadeUp} style={{ marginTop: '20px' }}>Hasil Kerja Kami</motion.h2>
+          <motion.h2 id="gallery-heading" variants={fadeUp} style={{ marginTop: '20px' }}>Portofolio Hasil Cukur Rambut Pria Kami</motion.h2>
           <motion.p variants={fadeUp} className="prose" style={{ marginTop: '14px' }}>
             Klik gambar atau video untuk melihat lebih besar. Setiap potongan adalah karya.
           </motion.p>
@@ -792,7 +797,7 @@ function Gallery() {
         <motion.div layout className="gallery-grid-v2" role="list" aria-label="Galeri Dinasti Barbershop">
           <AnimatePresence mode="popLayout">
             {filteredItems.map((item, i) => (
-              <motion.div
+              <motion.figure
                 key={item.src}
                 layout
                 initial={{ opacity: 0, scale: 0.85 }}
@@ -803,22 +808,24 @@ function Gallery() {
                 onClick={() => setSelectedIndex(i)}
                 role="listitem"
                 tabIndex={0}
-                aria-label={`Lihat ${item.alt}`}
+                aria-label={`Lihat ${mediaAlt(item, i)}`}
                 onKeyDown={e => e.key === 'Enter' && setSelectedIndex(i)}
               >
                 <div className="gallery-card-media">
                   {item.type === 'image' ? (
                     <motion.img
                       src={item.src}
-                      alt={item.alt}
+                      alt={mediaAlt(item, i)}
                       loading="lazy"
+                      decoding="async"
                       whileHover={{ scale: 1.07 }}
                       transition={{ duration: 0.4 }}
                     />
                   ) : (
                     <motion.video
                       src={item.src}
-                      muted playsInline loop autoPlay
+                      muted playsInline loop autoPlay preload="metadata"
+                      aria-label={`Video proses potong rambut pria oleh Ikbar Kamil di Ikbar Barbershop Kuningan — ${mediaAlt(item, i)}`}
                       whileHover={{ scale: 1.07 }}
                       transition={{ duration: 0.4 }}
                     />
@@ -833,10 +840,10 @@ function Gallery() {
                   transition={{ duration: 0.22 }}
                 >
                   <IconZoom size={32} />
-                  <span className="gallery-card-label">{item.alt}</span>
+                  <span className="gallery-card-label">{mediaAlt(item, i)}</span>
                   <span className="gallery-card-badge">{item.category}</span>
                 </motion.div>
-              </motion.div>
+              </motion.figure>
             ))}
           </AnimatePresence>
         </motion.div>
@@ -854,7 +861,7 @@ function Gallery() {
             onClick={() => setSelectedIndex(null)}
             role="dialog"
             aria-modal="true"
-            aria-label={selectedItem.alt}
+            aria-label={mediaAlt(selectedItem, selectedIndex)}
           >
             <motion.div
               className="lightbox-v2-content"
@@ -916,7 +923,7 @@ function Gallery() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
               >
-                <span className="lightbox-v2-title">{selectedItem.alt}</span>
+                <span className="lightbox-v2-title">{mediaAlt(selectedItem, selectedIndex)}</span>
                 <span className="lightbox-v2-badge">{selectedItem.category}</span>
                 <span className="lightbox-v2-counter">{selectedIndex + 1} / {filteredItems.length}</span>
               </motion.div>
@@ -943,14 +950,14 @@ function VideoSection() {
   }, [])
 
   return (
-    <section className="section video-section" id="video">
+    <section className="section video-section" id="video" aria-labelledby="video-heading">
       <div className="container">
         <div className="video-header">
           <Reveal>
             <span className="overline">Behind the Chair</span>
           </Reveal>
           <Reveal delay={0.1}>
-            <h2 style={{ marginTop: '20px' }}>Lihat Aksi Kami</h2>
+            <h2 id="video-heading" style={{ marginTop: '20px' }}>Behind The Chair — Lihat Aksi Cukur Presisi Kami</h2>
           </Reveal>
           <Reveal delay={0.2}>
             <p className="prose" style={{ marginTop: '16px', marginInline: 'auto', textAlign: 'center' }}>
@@ -968,6 +975,7 @@ function VideoSection() {
               controls={playing}
               playsInline
               preload="metadata"
+              aria-label="Video proses potong rambut pria oleh Ikbar Kamil di Ikbar Barbershop Kuningan"
               onPlay={() => setPlaying(true)}
               onPause={() => setPlaying(false)}
             />
@@ -1036,7 +1044,7 @@ function ServiceCard({ title, items, isHighlight = false, showCta = false, ctaTe
               <IconCheck size={13} />
             </div>
             <div className="service-card-info">
-              <span className="service-card-name">{item.name}</span>
+              <h3 className="service-card-name">{item.name}</h3>
               <span className="service-card-desc">{item.desc?.replace(/Stytle permin/gi, 'Style perming')}</span>
             </div>
             <span className="service-card-price">{item.price}</span>
@@ -1083,7 +1091,7 @@ function Services() {
   const servicesTambahan = siteData?.servicesTambahan ?? SERVICES_TAMBAHAN
   const ctaHrefTambahan = link('Halo Dinasti, mau tanya soal layanan tambahan yang tersedia dong')
   return (
-    <section className="section services" id="layanan">
+    <section className="section services" id="layanan" aria-labelledby="service-heading">
       <div className="container">
         <motion.div
           className="services-header"
@@ -1093,8 +1101,8 @@ function Services() {
           viewport={{ once: true, margin: '-60px 0px' }}
         >
           <motion.span className="overline" variants={fadeUp}>Layanan & Harga</motion.span>
-          <motion.h2 variants={fadeUp} style={{ marginTop: '20px' }}>
-            Pilihan Gaya &<br />Layanan Kami
+          <motion.h2 id="service-heading" variants={fadeUp} style={{ marginTop: '20px' }}>
+            Pilihan Gaya Cukur Rambut Pria &<br />Layanan Kami
           </motion.h2>
           <motion.p variants={fadeUp} className="prose" style={{ marginTop: '16px' }}>
             Semua layanan diawali dengan sesi konsultasi gratis.
@@ -1184,7 +1192,7 @@ function Lokasi() {
   const openStatusLabel = isOpen ? 'Sedang buka hari ini' : `Tutup — buka kembali pukul ${openingHour}:00`
 
   return (
-    <section className="section lokasi" id="lokasi">
+    <section className="section lokasi" id="lokasi" aria-labelledby="location-heading">
       <div className="container">
         <div className="lokasi-grid">
           <motion.div
@@ -1195,8 +1203,8 @@ function Lokasi() {
             viewport={{ once: true, margin: '-60px 0px' }}
           >
             <motion.span className="overline" variants={fadeUp}>Temukan Kami</motion.span>
-            <motion.h2 variants={fadeUp} style={{ marginTop: '20px' }}>
-              Lokasi &<br />Jam Buka
+            <motion.h2 id="location-heading" variants={fadeUp} style={{ marginTop: '20px' }}>
+              Lokasi Barbershop di Luragung, Kuningan<br />& Jam Buka
             </motion.h2>
 
             <motion.div className="lokasi-address" variants={stagger(0.1)}>
@@ -1207,9 +1215,9 @@ function Lokasi() {
               ].map((row, i) => (
                 <motion.div className="lokasi-row" key={i} variants={fadeUp}>
                   <div className="lokasi-icon">{row.icon}</div>
-                  <div className="lokasi-text">
+                    <div className="lokasi-text">
                     <h4>{row.label}</h4>
-                    <p>{row.value}</p>
+                      {row.label === 'Alamat' ? <address>{row.value}</address> : <p>{row.value}</p>}
                   </div>
                 </motion.div>
               ))}
@@ -1240,7 +1248,7 @@ function Lokasi() {
           <Reveal variants={slideRight}>
             <div className="map-wrapper">
               <iframe
-                title="Lokasi Dinasti Barbershop"
+                title="Peta Lokasi Ikbar Barbershop di Jl. Raya Luragung - Kuningan, Jawa Barat"
                 src={mapsUrl}
                 width="100%"
                 height="100%"
@@ -1265,10 +1273,10 @@ function Kontak() {
   const igHandle = siteData?.kontak?.instagram && !/ikbar/i.test(siteData.kontak.instagram)
     ? siteData.kontak.instagram
     : 'dinasti.barbershop'
-  const waHref = `https://wa.me/${waNum}?text=${encodeURIComponent('Halo Dinasti, boleh konsultasi soal potongan rambut yang cocok buat saya?')}`
+  const waHref = `https://wa.me/${waNum}?text=${encodeURIComponent('Halo Ikbar, boleh konsultasi soal potongan rambut yang cocok buat saya?')}`
   const igHref = `https://www.instagram.com/${igHandle}/`
   return (
-    <section className="kontak" id="kontak">
+    <section className="kontak" id="kontak" aria-labelledby="contact-heading">
       <div className="kontak-inner">
         <Reveal>
           <span className="overline" style={{ color: '#888', justifyContent: 'center' }}>
@@ -1276,13 +1284,13 @@ function Kontak() {
           </span>
         </Reveal>
         <Reveal delay={0.1}>
-          <h2 style={{ marginTop: '20px', fontSize: 'clamp(36px, 6vw, 72px)' }}>
-            Tanya Langsung<br />ke DINASTI
+          <h2 id="contact-heading" style={{ marginTop: '20px', fontSize: 'clamp(36px, 6vw, 72px)' }}>
+            Tanya Langsung<br />ke IKBAR
           </h2>
         </Reveal>
         <Reveal delay={0.2}>
           <p className="prose" style={{ marginTop: '20px' }}>
-            Mau potongan yang sesuai sama karakter kamu? Langsung aja tanya Dinasti —
+            Mau potongan yang sesuai sama karakter kamu? Langsung aja tanya Ikbar —
             konsultasi santai, gratis, dan hasilnya dijamin memuaskan.
           </p>
         </Reveal>
@@ -1298,7 +1306,7 @@ function Kontak() {
               whileTap={{ scale: 0.97 }}
             >
               <IconWA size={20} fill="white" />
-              Tanya ke DINASTI via WA
+              Tanya ke IKBAR via WA
             </motion.a>
             <motion.a
               href={igHref}
@@ -1321,7 +1329,7 @@ function Kontak() {
               className="kontak-social-link"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="WhatsApp Dinasti Barbershop"
+              aria-label="WhatsApp Ikbar Barbershop"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
@@ -1356,13 +1364,12 @@ function Footer() {
     <footer className="footer">
       <div className="footer-inner">
         <span className="footer-logo">
-          <img className="brand-logo" src="/assets/logo-dinasti.png" alt="Dinasti Barbershop" />
+          <img className="brand-logo" src="/assets/logo-dinasti.svg" alt="Logo Warisan Keluarga Dinasti Barbershop - Ikbar Barbershop Kuningan" />
         </span>
         <ul className="footer-links">
           {NAV_LINKS.map(l => (
             <li key={l.id}>
-              <a onClick={() => scrollTo(l.id)} role="button" tabIndex={0}
-                onKeyDown={e => e.key === 'Enter' && scrollTo(l.id)}>{l.label}</a>
+              <a href={`#${l.id}`} onClick={e => { e.preventDefault(); scrollTo(l.id) }}>{l.label}</a>
             </li>
           ))}
         </ul>
@@ -1413,6 +1420,86 @@ function WAFloat() {
   )
 }
 
+// ─── STRUCTURED SEO DATA ────────────────────────────────────────────────────
+function SeoSchema() {
+  const siteData = useSiteData()
+  const lokasiData = siteData?.lokasi || {}
+  const kontakData = siteData?.kontak || {}
+  const address = lokasiData.address && !/ikbar|isi alamat/i.test(lokasiData.address)
+    ? lokasiData.address
+    : 'XJPF+78W, Jl. Raya Luragung - Kuningan, Margasari, Kec. Luragung, Kabupaten Kuningan, Jawa Barat 45581'
+  const phone = kontakData.wa_number || '6283110071825'
+  const instagram = kontakData.instagram && !/ikbar/i.test(kontakData.instagram)
+    ? kontakData.instagram
+    : 'dinasti.barbershop'
+  const mainServices = siteData?.servicesUtama || SERVICES_UTAMA
+  const extraServices = siteData?.servicesTambahan || SERVICES_TAMBAHAN
+  const offer = (item) => {
+    const numericPrice = String(item.price || '').replace(/[^0-9]/g, '')
+    return {
+      '@type': 'Offer',
+      name: item.name,
+      itemOffered: { '@type': 'Service', name: item.name, description: item.desc },
+      ...(numericPrice ? { price: numericPrice, priceCurrency: 'IDR' } : {}),
+    }
+  }
+  const schema = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': ['BarberShop', 'HairSalon', 'LocalBusiness'],
+        '@id': 'https://ikbar-barbershop.vercel.app/#barbershop',
+        name: 'Ikbar Barbershop',
+        alternateName: ['Dinasti Barbershop', 'Ikbar Barbershop Luragung Kuningan'],
+        description: 'Barbershop pria di Luragung, Kabupaten Kuningan dengan konsep warisan keluarga dan sesi konsultasi personal gratis sebelum cukur. Melayani Skin Fade, Taper, Undercut, Korean Perming, dan Creambath.',
+        url: 'https://ikbar-barbershop.vercel.app/',
+        telephone: `+${phone}`,
+        priceRange: 'Rp 25.000',
+        currenciesAccepted: 'IDR',
+        paymentAccepted: 'Cash, QRIS, Transfer',
+        image: 'https://ikbar-barbershop.vercel.app/assets/og-image.jpg',
+        logo: 'https://ikbar-barbershop.vercel.app/assets/logo-dinasti.svg',
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: address,
+          addressLocality: 'Kec. Luragung, Kabupaten Kuningan',
+          addressRegion: 'Jawa Barat',
+          postalCode: '45581',
+          addressCountry: 'ID',
+        },
+        geo: { '@type': 'GeoCoordinates', latitude: -6.9825, longitude: 108.6185 },
+        hasMap: 'https://www.google.com/maps/search/?api=1&query=XJPF%2B78W+Margasari+Kuningan',
+        openingHoursSpecification: [
+          { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], opens: '16:00', closes: '21:00' },
+          { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Saturday', 'Sunday'], opens: '10:00', closes: '21:00' },
+        ],
+        sameAs: [`https://www.instagram.com/${instagram}/`, `https://wa.me/${phone}`],
+        areaServed: ['Luragung', 'Kuningan', 'Cidahu', 'Ciawigebang', 'Cibingbin', 'Ciwaru'],
+        hasOfferCatalog: { '@id': 'https://ikbar-barbershop.vercel.app/#offers' },
+      },
+      {
+        '@type': 'Person',
+        '@id': 'https://ikbar-barbershop.vercel.app/#founder',
+        name: 'Ikbar Kamil',
+        jobTitle: 'Head Barber & Founder',
+        worksFor: { '@id': 'https://ikbar-barbershop.vercel.app/#barbershop' },
+        knowsAbout: ['Men Haircut', 'Skin Fade', 'Taper Fade', 'Undercut', 'Korean Perm', 'Hair Styling Consultation'],
+      },
+      {
+        '@type': 'OfferCatalog',
+        '@id': 'https://ikbar-barbershop.vercel.app/#offers',
+        name: 'Pilihan Gaya Cukur Rambut Pria dan Layanan Tambahan',
+        itemListElement: [
+          { '@type': 'OfferCatalog', name: 'Signature Haircut + Konsultasi Personal Gratis', itemListElement: mainServices.map(offer) },
+          { '@type': 'OfferCatalog', name: 'Layanan Tambahan dan Hair Treatment', itemListElement: extraServices.map(offer) },
+        ],
+      },
+    ],
+  }
+
+  return <script id="dinasti-seo-schema" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+}
+
 // ─── APP ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const [siteData, setSiteData] = useState(null)
@@ -1455,6 +1542,7 @@ export default function App() {
 
   return (
     <SiteDataCtx.Provider value={siteData}>
+      <SeoSchema />
       <Navbar />
       <main>
         <Hero />
