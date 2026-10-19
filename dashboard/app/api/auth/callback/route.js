@@ -9,7 +9,8 @@ import { isSafeInternalPath } from '@/lib/security'
  * Tugas: tukar ?code= menjadi session cookie, lalu redirect ke dashboard.
  */
 export async function GET(request) {
-  const { searchParams, origin } = new URL(request.url)
+  const { searchParams } = new URL(request.url)
+  const publicOrigin = process.env.CMS_PUBLIC_ORIGIN || 'https://ikbar-barbershop-5rx3.vercel.app'
   const code = searchParams.get('code')
   const next = isSafeInternalPath(searchParams.get('next'), '/dashboard')
 
@@ -37,10 +38,10 @@ export async function GET(request) {
 
     if (!error) {
       // Session berhasil dibuat — redirect ke dashboard
-      return NextResponse.redirect(new URL(next, origin))
+      return NextResponse.redirect(new URL(next, publicOrigin))
     }
   }
 
   // Jika gagal, redirect ke login dengan pesan error
-  return NextResponse.redirect(`${origin}/login?error=oauth_failed`)
+  return NextResponse.redirect(`${publicOrigin}/login?error=oauth_failed`)
 }

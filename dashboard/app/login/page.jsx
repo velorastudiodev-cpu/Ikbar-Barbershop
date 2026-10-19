@@ -45,10 +45,13 @@ export default function LoginPage() {
     setLoading(true)
 
     const supabase = createClient()
+    const callbackUrl = process.env.NEXT_PUBLIC_AUTH_CALLBACK_URL
+      || 'https://ikbar-barbershop-5rx3.vercel.app/api/auth/callback'
+
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
+        redirectTo: callbackUrl,
       },
     })
 
