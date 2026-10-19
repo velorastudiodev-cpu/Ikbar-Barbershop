@@ -1,15 +1,23 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { randomUUID } from 'node:crypto'
+import {
+  hasValidFileSignature,
+  isSafeStoragePath,
+  requireAdmin,
+  validateUpload,
+} from '@/lib/security'
 
 // ─── Update site_content section ─────────────────────────────────────
 export async function updateSiteContent(prevState, formData) {
-  const supabase = await createClient()
+  const { supabase, error: authError } = await requireAdmin()
+  if (authError) return { error: authError }
   const section = formData.get('section')
   const contentRaw = formData.get('content')
 
-  if (!section) return { error: 'Section tidak ditemukan' }
+  if (typeof section !== 'string' || !/^[a-z0-9_-]{1,40}$/i.test(section)) return { error: 'Section tidak valid' }
+  if (typeof contentRaw !== 'string' || contentRaw.length > 100_000) return { error: 'Konten terlalu besar' }
 
   let content
   try {
@@ -31,33 +39,22 @@ export async function updateSiteContent(prevState, formData) {
 
 // ─── Upload file ke Supabase Storage ─────────────────────────────────
 export async function uploadFile(prevState, formData) {
-  const supabase = await createClient()
+  const { supabase, error: authError } = await requireAdmin()
+  if (authError) return { error: authError }
   const file = formData.get('file')
   const folder = formData.get('folder') || 'gallery'
-
-  if (!file || file.size === 0) return { error: 'File tidak ditemukan' }
-
-  // Validasi ukuran
-  const isVideo = file.type.startsWith('video/')
-  const maxSize = isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024
-  if (file.size > maxSize) {
-    return { error: isVideo ? 'Video maksimal 50MB' : 'Foto maksimal 5MB' }
-  }
+  const validation = validateUpload(file, folder)
+  if (validation.error) return { error: validation.error }
 
   const BUCKET = 'site-media'
-
-  // Generate nama unik
-  const ext = file.name.split('.').pop()
-  const timestamp = Date.now()
-  const filename = `${folder}/${timestamp}.${ext}`
-
-  const arrayBuffer = await file.arrayBuffer()
-  const buffer = new Uint8Array(arrayBuffer)
+  const buffer = Buffer.from(await file.arrayBuffer())
+  if (!hasValidFileSignature(buffer, validation.mime)) return { error: 'Isi file tidak cocok dengan formatnya' }
+  const filename = `${folder}/${randomUUID()}.${validation.extension}`
 
   const { data, error } = await supabase.storage
     .from(BUCKET)
     .upload(filename, buffer, {
-      contentType: file.type,
+      contentType: validation.mime,
       upsert: false,
     })
 
@@ -73,7 +70,9 @@ export async function uploadFile(prevState, formData) {
 
 // ─── Delete file dari Supabase Storage ───────────────────────────────
 export async function deleteStorageFile(path) {
-  const supabase = await createClient()
+  const { supabase, error: authError } = await requireAdmin()
+  if (authError) return { error: authError }
+  if (!isSafeStoragePath(path)) return { error: 'Path file tidak valid' }
   const { error } = await supabase.storage.from('site-media').remove([path])
   if (error) return { error: error.message }
   return { success: true }
@@ -81,14 +80,16 @@ export async function deleteStorageFile(path) {
 
 // ─── GALLERY: Add item ────────────────────────────────────────────────
 export async function addGalleryItem(prevState, formData) {
-  const supabase = await createClient()
+  const { supabase, error: authError } = await requireAdmin()
+  if (authError) return { error: authError }
 
   const src = formData.get('src')?.trim()
   const type = formData.get('type') || 'image'
   const alt = formData.get('alt')?.trim() || ''
   const category = type === 'video' ? 'Video' : 'Foto'
 
-  if (!src) return { error: 'URL file wajib diisi' }
+  if (!src || src.length > 2_000 || !/^https:\/\//i.test(src)) return { error: 'URL file tidak valid' }
+  if (!['image', 'video'].includes(type)) return { error: 'Tipe file tidak valid' }
 
   // Get max sort_order
   const { data: maxData } = await supabase
@@ -112,7 +113,9 @@ export async function addGalleryItem(prevState, formData) {
 
 // ─── GALLERY: Delete item ─────────────────────────────────────────────
 export async function deleteGalleryItem(id) {
-  const supabase = await createClient()
+  const { supabase, error: authError } = await requireAdmin()
+  if (authError) return { error: authError }
+  if (!id || typeof id !== 'string' || id.length > 100) return { error: 'ID tidak valid' }
 
   // Ambil path storage jika URL adalah dari Supabase
   const { data: item } = await supabase
@@ -127,7 +130,7 @@ export async function deleteGalleryItem(id) {
   // Hapus dari storage jika path mengandung supabase
   if (item?.src?.includes('supabase')) {
     const path = item.src.split('/site-media/')[1]
-    if (path) {
+    if (path && isSafeStoragePath(path)) {
       await supabase.storage.from('site-media').remove([path])
     }
   }
@@ -138,7 +141,8 @@ export async function deleteGalleryItem(id) {
 
 // ─── SERVICES: Add ────────────────────────────────────────────────────
 export async function addService(prevState, formData) {
-  const supabase = await createClient()
+  const { supabase, error: authError } = await requireAdmin()
+  if (authError) return { error: authError }
 
   const name = formData.get('name')?.trim()
   const description = formData.get('description')?.trim() || ''
@@ -170,7 +174,8 @@ export async function addService(prevState, formData) {
 
 // ─── SERVICES: Update ─────────────────────────────────────────────────
 export async function updateService(prevState, formData) {
-  const supabase = await createClient()
+  const { supabase, error: authError } = await requireAdmin()
+  if (authError) return { error: authError }
 
   const id = formData.get('id')
   const name = formData.get('name')?.trim()
@@ -179,7 +184,7 @@ export async function updateService(prevState, formData) {
   const category = formData.get('category') || 'utama'
   const highlight = formData.get('highlight') === 'true'
 
-  if (!id) return { error: 'ID tidak ditemukan' }
+  if (!id || typeof id !== 'string' || id.length > 100) return { error: 'ID tidak valid' }
   if (!name) return { error: 'Nama layanan wajib diisi' }
 
   const { error } = await supabase
@@ -195,7 +200,9 @@ export async function updateService(prevState, formData) {
 
 // ─── SERVICES: Delete ─────────────────────────────────────────────────
 export async function deleteService(id) {
-  const supabase = await createClient()
+  const { supabase, error: authError } = await requireAdmin()
+  if (authError) return { error: authError }
+  if (!id || typeof id !== 'string' || id.length > 100) return { error: 'ID tidak valid' }
 
   const { error } = await supabase.from('services').delete().eq('id', id)
   if (error) return { error: error.message }

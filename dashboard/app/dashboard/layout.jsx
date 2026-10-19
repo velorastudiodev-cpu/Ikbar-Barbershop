@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { isAdminUser } from '@/lib/security'
 import Sidebar from '@/components/Sidebar'
 
 export default async function DashboardLayout({ children }) {
@@ -10,6 +11,7 @@ export default async function DashboardLayout({ children }) {
   if (!user) {
     redirect('/login')
   }
+  if (!isAdminUser(user)) redirect('/login?error=forbidden')
 
   return (
     <div className="dashboard-shell">

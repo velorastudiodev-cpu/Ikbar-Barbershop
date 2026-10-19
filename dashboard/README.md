@@ -16,6 +16,10 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## CMS security
+
+Set `CMS_ADMIN_EMAILS` in the dashboard's Vercel environment to a comma-separated list of Google account emails that may access the CMS. If it is not set, the existing owner account is allowed for backwards compatibility. Run [`supabase/security-hardening.sql`](./supabase/security-hardening.sql) in the Supabase SQL editor to restrict direct database writes to the admin role.
+
 You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

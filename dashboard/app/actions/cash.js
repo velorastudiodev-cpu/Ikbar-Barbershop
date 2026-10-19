@@ -1,14 +1,16 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/security'
 
 // ─── Update Cash Balance ─────────────────────────────────────────────
 export async function updateCash(prevState, formData) {
-  const supabase = await createClient()
+  const { supabase, error: authError } = await requireAdmin()
+  if (authError) return { error: authError }
 
   const newBalance = parseFloat(formData.get('balance'))
-  const notes = formData.get('notes') || null
+  const notesRaw = formData.get('notes')
+  const notes = typeof notesRaw === 'string' ? notesRaw.slice(0, 500) || null : null
 
   if (isNaN(newBalance) || newBalance < 0) {
     return { error: 'Saldo kas harus angka positif' }

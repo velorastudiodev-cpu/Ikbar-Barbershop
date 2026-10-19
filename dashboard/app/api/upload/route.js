@@ -1,50 +1,45 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { randomUUID } from 'node:crypto'
+import {
+  hasValidFileSignature,
+  isSameOrigin,
+  requireAdmin,
+  validateUpload,
+} from '@/lib/security'
 
 export const maxDuration = 60 // 60 detik timeout untuk file besar
 
 export async function POST(request) {
   try {
-    const supabase = await createClient()
-
-    // Cek autentikasi
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!isSameOrigin(request)) {
+      return NextResponse.json({ error: 'Origin tidak diizinkan' }, { status: 403 })
     }
+    const contentLength = Number(request.headers.get('content-length') || 0)
+    if (contentLength > 52 * 1024 * 1024) {
+      return NextResponse.json({ error: 'Ukuran request terlalu besar' }, { status: 413 })
+    }
+
+    const { supabase, error: authError } = await requireAdmin()
+    if (authError) return NextResponse.json({ error: authError }, { status: 403 })
 
     const formData = await request.formData()
     const file = formData.get('file')
     const folder = formData.get('folder') || 'gallery'
 
-    if (!file || file.size === 0) {
-      return NextResponse.json({ error: 'File tidak ditemukan' }, { status: 400 })
+    const validation = validateUpload(file, folder)
+    if (validation.error) return NextResponse.json({ error: validation.error }, { status: 400 })
+
+    const buffer = Buffer.from(await file.arrayBuffer())
+    if (!hasValidFileSignature(buffer, validation.mime)) {
+      return NextResponse.json({ error: 'Isi file tidak cocok dengan formatnya' }, { status: 400 })
     }
 
-    // Validasi ukuran
-    const isVideo = file.type.startsWith('video/')
-    const maxSize = isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024
-    if (file.size > maxSize) {
-      return NextResponse.json(
-        { error: isVideo ? 'Video maksimal 50MB' : 'Foto maksimal 5MB' },
-        { status: 400 }
-      )
-    }
-
-    const BUCKET = 'site-media'
-
-    // Generate nama unik
-    const ext = file.name.split('.').pop()
-    const timestamp = Date.now()
-    const filename = `${folder}/${timestamp}.${ext}`
-
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = new Uint8Array(arrayBuffer)
+    const filename = `${folder}/${randomUUID()}.${validation.extension}`
 
     const { data, error } = await supabase.storage
-      .from(BUCKET)
+      .from('site-media')
       .upload(filename, buffer, {
-        contentType: file.type,
+        contentType: validation.mime,
         upsert: false,
       })
 

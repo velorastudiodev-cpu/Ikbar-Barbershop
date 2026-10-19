@@ -1,11 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/security'
 
 // ─── Add HPP Item ────────────────────────────────────────────────────
 export async function addHpp(prevState, formData) {
-  const supabase = await createClient()
+  const { supabase, error: authError } = await requireAdmin()
+  if (authError) return { error: authError }
 
   const item_name = formData.get('item_name')?.trim()
   const category = formData.get('category')?.trim() || 'Layanan'
@@ -36,7 +37,8 @@ export async function addHpp(prevState, formData) {
 
 // ─── Update HPP Item ─────────────────────────────────────────────────
 export async function updateHpp(prevState, formData) {
-  const supabase = await createClient()
+  const { supabase, error: authError } = await requireAdmin()
+  if (authError) return { error: authError }
 
   const id = formData.get('id')
   const item_name = formData.get('item_name')?.trim()
@@ -65,7 +67,9 @@ export async function updateHpp(prevState, formData) {
 
 // ─── Delete HPP Item ─────────────────────────────────────────────────
 export async function deleteHpp(id) {
-  const supabase = await createClient()
+  const { supabase, error: authError } = await requireAdmin()
+  if (authError) return { error: authError }
+  if (!id || typeof id !== 'string' || id.length > 100) return { error: 'ID tidak valid' }
 
   const { error } = await supabase.from('hpp').delete().eq('id', id)
 

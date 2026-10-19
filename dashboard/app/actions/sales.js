@@ -1,11 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/security'
 
 // ─── Add Sale ────────────────────────────────────────────────────────
 export async function addSale(prevState, formData) {
-  const supabase = await createClient()
+  const { supabase, error: authError } = await requireAdmin()
+  if (authError) return { error: authError }
 
   const date = formData.get('date')
   const total_trx = parseInt(formData.get('total_trx'), 10)
@@ -33,7 +34,8 @@ export async function addSale(prevState, formData) {
 
 // ─── Update Sale ─────────────────────────────────────────────────────
 export async function updateSale(prevState, formData) {
-  const supabase = await createClient()
+  const { supabase, error: authError } = await requireAdmin()
+  if (authError) return { error: authError }
 
   const id = formData.get('id')
   const date = formData.get('date')
@@ -60,7 +62,9 @@ export async function updateSale(prevState, formData) {
 
 // ─── Delete Sale ─────────────────────────────────────────────────────
 export async function deleteSale(id) {
-  const supabase = await createClient()
+  const { supabase, error: authError } = await requireAdmin()
+  if (authError) return { error: authError }
+  if (!id || typeof id !== 'string' || id.length > 100) return { error: 'ID tidak valid' }
 
   const { error } = await supabase.from('sales').delete().eq('id', id)
 

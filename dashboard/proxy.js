@@ -7,6 +7,12 @@ import { NextResponse } from 'next/server'
  */
 export async function proxy(request) {
   const { pathname } = request.nextUrl
+  const isDashboardRoute = pathname.startsWith('/dashboard')
+
+  const configuredAdmins = (process.env.CMS_ADMIN_EMAILS || 'velorastudiodev@gmail.com')
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean)
 
   // Guard: jika env vars tidak ada, jangan crash — log dan lanjut
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -19,7 +25,7 @@ export async function proxy(request) {
       'NEXT_PUBLIC_SUPABASE_ANON_KEY=', supabaseKey ? 'SET' : 'MISSING'
     )
     // Redirect ke login supaya tidak crash total
-    if (pathname.startsWith('/dashboard')) {
+    if (isDashboardRoute) {
       const loginUrl = request.nextUrl.clone()
       loginUrl.pathname = '/login'
       return NextResponse.redirect(loginUrl)
@@ -55,14 +61,22 @@ export async function proxy(request) {
     }
 
     // Redirect ke /login jika belum login dan mencoba akses /dashboard
-    if (!user && pathname.startsWith('/dashboard')) {
+    if (!user && isDashboardRoute) {
       const loginUrl = request.nextUrl.clone()
       loginUrl.pathname = '/login'
       return NextResponse.redirect(loginUrl)
     }
 
+    const isAdmin = user && (
+      user.app_metadata?.role === 'admin' ||
+      configuredAdmins.includes(user.email?.toLowerCase())
+    )
+    if (isDashboardRoute && user && !isAdmin) {
+      return NextResponse.json({ error: 'Akses admin diperlukan' }, { status: 403 })
+    }
+
     // Redirect ke /dashboard jika sudah login dan mengakses /login
-    if (user && pathname === '/login') {
+    if (user && isAdmin && pathname === '/login') {
       const dashboardUrl = request.nextUrl.clone()
       dashboardUrl.pathname = '/dashboard'
       return NextResponse.redirect(dashboardUrl)
@@ -71,6 +85,11 @@ export async function proxy(request) {
   } catch (err) {
     console.error('[proxy] UNCAUGHT ERROR:', err?.message, err?.stack)
     // Jangan crash — biarkan request lanjut
+    if (isDashboardRoute) {
+      const loginUrl = request.nextUrl.clone()
+      loginUrl.pathname = '/login'
+      return NextResponse.redirect(loginUrl)
+    }
     return NextResponse.next({ request })
   }
 
