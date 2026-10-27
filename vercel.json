@@ -11,7 +11,7 @@
         { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com; media-src 'self' blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co; frame-src 'self' https://www.google.com https://www.google.com/maps; form-action 'self' https://wa.me https://www.instagram.com"
+          "value": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com; media-src 'self' blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co; frame-src 'self' https://www.google.com https://maps.google.com; form-action 'self' https://wa.me https://www.instagram.com"
         }
       ]
     }

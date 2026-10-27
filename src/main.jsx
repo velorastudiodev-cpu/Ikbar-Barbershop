@@ -1,10 +1,11 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
+import { StrictMode } from 'react'
+import { createRoot, hydrateRoot } from 'react-dom/client'
 import App from './App.jsx'
-import './index.css'
+import './styles.css'
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+const root = document.getElementById('root')
+// Content baked in at build time (from the CMS) when available; App still refreshes it from the CMS.
+const app = <StrictMode><App initial={window.__SITE__} /></StrictMode>
+// The build prerenders the page into #root; hydrate it instead of rendering from scratch.
+if (root.hasChildNodes()) hydrateRoot(root, app)
+else createRoot(root).render(app)
