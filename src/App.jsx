@@ -62,7 +62,8 @@ export default function App({ initial }) {
     // The prerendered page already shows fallback content; fetch the CMS once the browser is idle.
     const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 300))
     // supabase-js is split into its own chunk so it never delays the first paint.
-    idle(() => import('./lib/supabase.js').then(m => loadSiteData(m.supabase)).then(setSite).catch(() => {}), { timeout: 2500 })
+    // No client (env vars missing) → keep the prerendered CMS content instead of swapping in the bundled photos.
+    idle(() => import('./lib/supabase.js').then(m => m.supabase && loadSiteData(m.supabase).then(setSite)).catch(() => {}), { timeout: 2500 })
   }, [])
 
   return (
