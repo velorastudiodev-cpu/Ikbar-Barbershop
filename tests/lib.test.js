@@ -93,8 +93,6 @@ test('CMS rows map onto the site with the same contract the dashboard writes', a
   assert.equal(site.servicesUtama[0].price, 'Rp 30.000')
   assert.equal(site.servicesUtama[0].desc, 'Tajam')
   assert.equal(site.servicesTambahan[0].price, 'Tanya Dinasti')
-  // The old white-background crest photo is replaced by the dark-theme crest.
-  assert.equal(site.aboutImage, null)
   // Sections the CMS leaves empty fall back to the built-in content.
   assert.equal(site.videoUrl, FALLBACK.videoUrl)
   assert.equal(await loadSiteData(null), FALLBACK)
@@ -134,4 +132,11 @@ test('any Maps link from the CMS becomes an embeddable URL', async () => {
   // Garbage or empty input still yields a working map.
   for (const bad of [null, '', 'not a url', 'https://example.com/x']) assert.match(mapLinks(bad, addr).embed, /output=embed$/)
   assert.match(mapLinks(null, addr).directions, /destination=-6\.9825%2C108\.6185$/)
+})
+
+test('uploaded videos show their first frame; bundled ones keep their posters', async () => {
+  const { videoProps } = await import('../src/data.js')
+  assert.deepEqual(videoProps('/assets/main-video.mp4'), { src: '/assets/main-video.mp4', poster: '/img/posters/main-video.webp', preload: 'none' })
+  assert.deepEqual(videoProps('https://x.supabase.co/storage/v1/object/public/site-media/gallery/a.mp4'),
+    { src: 'https://x.supabase.co/storage/v1/object/public/site-media/gallery/a.mp4#t=0.1', preload: 'metadata' })
 })

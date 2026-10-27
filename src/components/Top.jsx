@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { waLink, imageProps, posterFor } from '../data.js'
+import { FALLBACK, waLink, imageProps, posterFor } from '../data.js'
 import { useSite } from '../site.js'
 import { Icon, OpenStatus } from './ui.jsx'
 
@@ -54,10 +54,13 @@ export function Header() {
 
 const WALL_SIZES = '(max-width: 960px) 30vw, 220px'
 
-/** Two columns of haircut photos drifting in opposite directions. Uses CMS photos when present. */
+/**
+ * Two columns of haircut photos drifting in opposite directions.
+ * Always the bundled, pre-sized photos: CMS uploads (mostly videos without posters, or full-size photos)
+ * used to replace them a moment after load and empty the wall.
+ */
 function CutWall() {
-  const { gallery } = useSite()
-  const tiles = gallery
+  const tiles = FALLBACK.gallery
     .map(g => {
       // On phones the wall is a faint backdrop, so small files are plenty.
       if (g.type !== 'video') return { ...imageProps(g.src, WALL_SIZES), alt: g.alt }

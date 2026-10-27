@@ -1,19 +1,20 @@
 /* Dinasti Barbershop — "House of Dinasti": cape-stripe black, bone white, brass. */
-@font-face { font-family: 'Bodoni Moda'; src: url('/fonts/bodoni.woff2') format('woff2'); font-weight: 400 900; font-display: swap; }
-@font-face { font-family: 'Bodoni Moda'; src: url('/fonts/bodoni-italic.woff2') format('woff2'); font-weight: 400 900; font-style: italic; font-display: swap; }
-@font-face { font-family: 'Manrope'; src: url('/fonts/manrope.woff2') format('woff2'); font-weight: 200 800; font-display: swap; }
-/* Metric-matched fallbacks keep the layout still while the web fonts swap in. */
-@font-face { font-family: 'Bodoni Fallback'; src: local('Times New Roman'), local('Georgia'); size-adjust: 104%; ascent-override: 92%; descent-override: 24%; }
-@font-face { font-family: 'Manrope Fallback'; src: local('Arial'); size-adjust: 104%; ascent-override: 102%; descent-override: 28%; }
+/* Playfair Display (headings) + Plus Jakarta Sans (text): elegant, with sturdier strokes than the old hairline serif. Self-hosted, OFL. */
+@font-face { font-family: 'Playfair Display'; src: url('/fonts/playfair.woff2') format('woff2'); font-weight: 400 900; font-display: swap; }
+@font-face { font-family: 'Playfair Display'; src: url('/fonts/playfair-italic.woff2') format('woff2'); font-weight: 400 900; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Plus Jakarta Sans'; src: url('/fonts/jakarta.woff2') format('woff2'); font-weight: 200 800; font-display: swap; }
+/* Metric-matched fallbacks (Capsize) keep the layout still while the web fonts swap in. */
+@font-face { font-family: 'Playfair Fallback'; src: local('Times New Roman'), local('TimesNewRomanPSMT'); ascent-override: 97.25%; descent-override: 22.56%; line-gap-override: 0%; size-adjust: 111.26%; }
+@font-face { font-family: 'Jakarta Fallback'; src: local('Arial'), local('ArialMT'); ascent-override: 98.88%; descent-override: 21.15%; line-gap-override: 0%; size-adjust: 104.98%; }
 
 :root {
   /* Original Dinasti palette: obsidian, alabaster, sand grey; silver accent that turns white on hover. */
   --ink: #111214; --ink-2: #1b1d20; --card: #1f2125; --card-2: #26292d;
   --line: rgba(220, 224, 229, .12); --line-2: rgba(220, 224, 229, .22);
-  --bone: #f4f5f6; --muted: #aeb2b8; --faint: #8f949b;
+  --bone: #f4f5f6; --muted: #c2c6cb; --faint: #9da2a8;
   --brass: #d5d8dc; --brass-l: #ffffff; --pole-red: #8f949b; --pole-blue: #3a3d42;
-  --display: 'Bodoni Moda', 'Bodoni Fallback', Georgia, serif;
-  --body: 'Manrope', 'Manrope Fallback', system-ui, sans-serif;
+  --display: 'Playfair Display', 'Playfair Fallback', Georgia, serif;
+  --body: 'Plus Jakarta Sans', 'Jakarta Fallback', system-ui, sans-serif;
   --shell: 1200px; --gutter: clamp(16px, 4vw, 40px);
   --ease: cubic-bezier(.22, 1, .36, 1);
   color-scheme: dark;
@@ -21,14 +22,14 @@
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 80px; -webkit-text-size-adjust: 100%; }
 html.menu-open { overflow: hidden; }
-body { margin: 0; background: var(--ink); color: var(--bone); font: 400 16px/1.65 var(--body); -webkit-font-smoothing: antialiased; overflow-x: clip; }
+body { margin: 0; background: var(--ink); color: var(--bone); font: 450 16px/1.7 var(--body); font-variant-numeric: lining-nums; -webkit-font-smoothing: antialiased; overflow-x: clip; }
 img, video { display: block; max-width: 100%; height: auto; }
 a { color: inherit; }
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 ::selection { background: var(--brass); color: var(--ink); }
 :focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; border-radius: 4px; }
-h1, h2, h3 { margin: 0; font-family: var(--display); font-weight: 500; line-height: 1.02; letter-spacing: -.01em; text-wrap: balance; }
+h1, h2, h3 { margin: 0; font-family: var(--display); font-weight: 600; line-height: 1.02; letter-spacing: -.01em; text-wrap: balance; }
 h2 { font-size: clamp(38px, 5.4vw, 68px); }
 h2 em, h1 em { font-style: italic; color: var(--brass-l); }
 .icon { flex-shrink: 0; }
@@ -92,8 +93,8 @@ h2 em, h1 em { font-style: italic; color: var(--brass-l); }
 .eyebrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 28px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
 .eyebrow span:first-child { color: var(--brass); }
 .eyebrow i { width: 4px; height: 4px; border-radius: 50%; background: var(--brass); }
-.hero h1 { position: relative; font-size: clamp(76px, 13vw, 168px); font-weight: 500; line-height: .82; letter-spacing: -.035em; text-transform: uppercase; }
-.hero h1 small { display: block; margin-top: .22em; font-family: var(--body); font-size: max(13px, .11em); font-weight: 700; letter-spacing: .62em; color: var(--brass); }
+.hero h1 { position: relative; font-size: clamp(64px, 12vw, 156px); font-weight: 600; line-height: .82; letter-spacing: -.035em; text-transform: uppercase; }
+.hero h1 small { display: block; margin-top: .34em; font-family: var(--body); font-size: max(13px, .11em); font-weight: 700; letter-spacing: .62em; color: var(--brass); }
 .crown { display: block; margin: 0 0 .08em .04em; color: var(--brass); line-height: 0; }
 .hero-lede { margin: 30px 0 0; color: var(--muted); font-size: clamp(16px, 1.4vw, 18px); text-wrap: pretty; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
@@ -139,7 +140,7 @@ h2 em, h1 em { font-style: italic; color: var(--brass-l); }
 .barber-photo figcaption i { width: 8px; height: 8px; border-radius: 50%; background: #6fcf8e; }
 .barber-copy h2 { font-size: clamp(52px, 7vw, 92px); line-height: .9; }
 .barber-role { margin: 14px 0 26px; color: var(--brass); font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
-.barber-stats { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0 0 26px; border: 1px solid var(--line); }
+.barber-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 0 26px; border: 1px solid var(--line); }
 .barber-stats div { padding: 14px 16px; }
 .barber-stats div + div { border-left: 1px solid var(--line); }
 .barber-stats dt { color: var(--faint); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
@@ -268,10 +269,10 @@ h2 em, h1 em { font-style: italic; color: var(--brass-l); }
 /* Contact: the original white band with black text */
 .kontak { padding: clamp(92px, 11vw, 156px) var(--gutter); background: #fff; color: #111214; text-align: center; }
 .kontak-inner { width: min(700px, 100%); margin-inline: auto; }
-.kontak .kicker { justify-content: center; color: #61666c; }
+.kontak .kicker { justify-content: center; color: #4a4e54; }
 .kontak .kicker::before { display: none; }
 .kontak h2 { margin-top: 6px; font-size: clamp(40px, 6vw, 72px); color: #111214; }
-.kontak p:not(.kicker) { max-width: 46ch; margin: 20px auto 0; color: #555a60; font-size: 17px; }
+.kontak p:not(.kicker) { max-width: 46ch; margin: 20px auto 0; color: #3d4146; font-size: 17px; }
 .kontak-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 44px; }
 .btn-dark { background: #111214; color: #fff; }
 .btn-dark:hover { background: #2a2c30; }
@@ -340,7 +341,9 @@ h2 em, h1 em { font-style: italic; color: var(--brass-l); }
   .masonry li { margin-bottom: 8px; }
   .hero-actions .btn, .kontak-actions .btn { flex: 1 1 100%; }
   .hero-meta dl { gap: 20px; }
-  .barber-stats dd { font-size: 24px; }
+  .barber-stats dd { font-size: 22px; }
+  .barber-stats div { padding: 12px 10px; }
+  .barber-stats dt { letter-spacing: .06em; }
   .day-chips { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .lb-prev, .lb-next { top: auto; bottom: 56px; translate: none; }
   .crest figcaption { right: 0; top: -14px; }

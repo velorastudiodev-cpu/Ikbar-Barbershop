@@ -3,14 +3,12 @@ import { useSite } from '../site.js'
 import { Icon, SectionHead } from './ui.jsx'
 
 export function About() {
-  const { aboutImage } = useSite()
   return (
     <section className="section about" id="tentang" aria-labelledby="about-title">
       <div className="shell about-grid">
         <figure className="crest" data-reveal>
-          {aboutImage
-            ? <img src={aboutImage} alt="Dinasti Barbershop" loading="lazy" decoding="async" />
-            : <img src="/img/crest-360.webp" srcSet="/img/crest-360.webp 360w, /img/crest-480.webp 480w, /img/crest-720.webp 720w" sizes="(max-width: 860px) 60vw, 340px" alt="Lambang Dinasti Barbershop: mahkota, rumah, dan gunting" width="360" height="470" loading="lazy" decoding="async" />}
+          {/* Always the dark-theme crest: the CMS photo slot still holds the old white-background crest, which used to replace it after load. */}
+          <img src="/img/crest-360.webp" srcSet="/img/crest-360.webp 360w, /img/crest-480.webp 480w, /img/crest-720.webp 720w" sizes="(max-width: 860px) 60vw, 340px" alt="Lambang Dinasti Barbershop: mahkota, rumah, dan gunting" width="360" height="470" loading="lazy" decoding="async" />
           <figcaption><span>Berdiri</span><b>2024</b></figcaption>
         </figure>
         <div>

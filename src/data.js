@@ -2,7 +2,7 @@
 // The CMS contract is unchanged from the previous site so the dashboard keeps working:
 //   gallery_items(src, type, alt, title, description, category, sort_order)
 //   services(name, description, price, category: 'utama' | 'tambahan', highlight, sort_order)
-//   site_content(section in lokasi | kontak | barber | about | video, content jsonb)
+//   site_content(section in lokasi | kontak | barber | video, content jsonb); `about` is ignored, the crest is fixed
 import { toDinasti } from './lib/brand.js'
 
 export const FALLBACK = {
@@ -16,7 +16,6 @@ export const FALLBACK = {
     { hari: 'Minggu', jam: '10:00 – 21:00', tutup: false },
   ],
   barberPhoto: '/assets/barber-ikbar.jpg',
-  aboutImage: null, // null → the bone-coloured crest made for the dark theme
   videoUrl: '/assets/main-video.mp4',
   gallery: [
     { src: '/assets/gallery-1.jpg', type: 'image', alt: 'Low taper dengan tekstur atas natural', category: 'Foto' },
@@ -79,6 +78,15 @@ export function posterFor(src = '', size) {
   return m && LOCAL_POSTERS.has(m[1]) ? `/img/posters/${m[1]}${size ? `-${size}` : ''}.webp` : undefined
 }
 
+/**
+ * Video attributes: bundled clips have poster images; uploaded clips don't, so they load just enough
+ * (`#t=0.1`, metadata) to show their first frame instead of an empty box.
+ */
+export function videoProps(src, posterSize) {
+  const poster = posterFor(src, posterSize)
+  return poster ? { src, poster, preload: 'none' } : { src: src && `${src}#t=0.1`, preload: 'metadata' }
+}
+
 export const waLink = (wa, message) => `https://wa.me/${wa}?text=${encodeURIComponent(message)}`
 
 // Guards inherited from the previous site: older CMS rows may still carry the Ikbar name or placeholders.
@@ -90,12 +98,12 @@ export async function loadSiteData(supabase) {
   const [gallery, services, content] = await Promise.all([
     supabase.from('gallery_items').select('*').order('sort_order', { ascending: true }),
     supabase.from('services').select('*').order('sort_order', { ascending: true }),
-    supabase.from('site_content').select('section, content').in('section', ['lokasi', 'kontak', 'barber', 'about', 'video']),
+    supabase.from('site_content').select('section, content').in('section', ['lokasi', 'kontak', 'barber', 'video']),
   ])
   const sections = Object.fromEntries((content.data || []).map(row => [row.section, row.content || {}]))
   const svc = (services.data || []).map(s => ({ ...s, name: toDinasti(s.name), desc: toDinasti(s.desc ?? s.description), price: toDinasti(s.price) }))
   const utama = svc.filter(s => s.category === 'utama'), tambahan = svc.filter(s => s.category === 'tambahan')
-  const { lokasi = {}, kontak = {}, barber = {}, about = {}, video = {} } = sections
+  const { lokasi = {}, kontak = {}, barber = {}, video = {} } = sections
   return {
     wa: clean(kontak.wa_number, /^$/)?.replace(/\D/g, '') || FALLBACK.wa,
     ig: clean(kontak.instagram, /ikbar/i)?.replace(/^@/, '') || FALLBACK.ig,
@@ -103,7 +111,6 @@ export async function loadSiteData(supabase) {
     mapsUrl: clean(lokasi.maps_url, /Toko Iwan|Ikbar/i) || FALLBACK.mapsUrl,
     hours: lokasi.hours_data?.length ? lokasi.hours_data : FALLBACK.hours,
     barberPhoto: clean(barber.photo_url, /^$/) || FALLBACK.barberPhoto,
-    aboutImage: clean(about.image_url, /about-new\.jpg$/) || FALLBACK.aboutImage,
     videoUrl: clean(video.video_url, /^$/) || FALLBACK.videoUrl,
     gallery: gallery.data?.length ? gallery.data.map(g => ({ ...g, alt: toDinasti(g.title || g.description || g.alt) })) : FALLBACK.gallery,
     servicesUtama: utama.length ? utama : FALLBACK.servicesUtama,

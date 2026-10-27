@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { imageProps, posterFor } from '../data.js'
+import { imageProps, videoProps } from '../data.js'
 import { useSite } from '../site.js'
 import { Icon, SectionHead } from './ui.jsx'
 
@@ -15,7 +15,7 @@ function InViewVideo({ src, label }) {
     io.observe(v)
     return () => io.disconnect()
   }, [src])
-  return <video ref={ref} src={src} poster={posterFor(src, 320)} muted loop playsInline preload="none" aria-label={label} />
+  return <video ref={ref} {...videoProps(src, 320)} muted loop playsInline aria-label={label} />
 }
 
 export function Gallery() {
@@ -78,7 +78,7 @@ export function Gallery() {
         {current && (
           <>
             {current.type === 'video'
-              ? <video key={current.src} src={current.src} poster={posterFor(current.src)} controls autoPlay playsInline />
+              ? <video key={current.src} {...videoProps(current.src)} controls autoPlay playsInline />
               : <img key={current.src} src={current.src} alt={current.alt || 'Hasil cukur Dinasti Barbershop'} />}
             <p className="lb-caption"><span>{current.alt}</span><span>{index + 1} / {items.length}</span></p>
           </>
@@ -102,7 +102,7 @@ export function BehindTheChair() {
           Saksikan sendiri bagaimana tangan Dinasti mengubah potongan biasa menjadi karya yang membangun rasa percaya diri.
         </SectionHead>
         <div className="chair-frame" data-reveal>
-          <video ref={ref} src={videoUrl} poster={posterFor(videoUrl)} controls={playing} playsInline preload="none"
+          <video ref={ref} {...videoProps(videoUrl)} controls={playing} playsInline
             aria-label="Video proses cukur di Dinasti Barbershop" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />
           {!playing && (
             <button className="chair-play" onClick={() => { ref.current?.play(); setPlaying(true) }} aria-label="Putar video">
