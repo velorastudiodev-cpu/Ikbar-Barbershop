@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import PenjualanClient from './PenjualanClient'
 
-export const metadata = { title: 'Penjualan & Kas — Ikbar Dashboard' }
+export const metadata = { title: 'Penjualan & Kas — Dinasti Dashboard' }
 
-export default async function PenjualanPage() {
+export default async function PenjualanPage({ searchParams }) {
+  const { tab } = await searchParams
   const supabase = await createClient()
 
   // Fetch semua data paralel
@@ -35,6 +36,7 @@ export default async function PenjualanPage() {
       initialCash={cashRes.data || { balance: 0 }}
       initialCashLog={cashLogRes.data || []}
       initialHpp={hppRes.data || []}
+      initialTab={tab}
     />
   )
 }

@@ -20,20 +20,20 @@ export default function ChartPanel({ monthlyData }) {
   const emptyState = !monthlyData || monthlyData.every(d => d.omzet === 0 && d.trx === 0)
 
   return (
-    <div className="panel" style={{ marginTop: '14px' }}>
+    <div className="panel">
       <div className="panel-header">
         <div>
           <div className="panel-title">Tren 6 Bulan Terakhir</div>
-          <div className="panel-sub">Omzet & estimasi margin per bulan</div>
+          <div className="panel-sub">Omzet & perkiraan untung per bulan</div>
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>
-            <span style={{ width: 20, height: 2, background: '#f59e0b', display: 'inline-block', borderRadius: 1 }} />
+            <span style={{ width: 20, height: 2, background: 'var(--chart-omzet)', display: 'inline-block', borderRadius: 1 }} />
             Omzet
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>
             <span style={{ width: 20, height: 2, background: 'var(--success)', display: 'inline-block', borderRadius: 1 }} />
-            Est. Margin
+            Perkiraan untung
           </span>
         </div>
       </div>
@@ -100,8 +100,8 @@ function Chart({ data, tooltip, setTooltip }) {
       >
         <defs>
           <linearGradient id="omzetGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
+            <stop offset="0%" stopColor="var(--chart-omzet)" stopOpacity="0.18" />
+            <stop offset="100%" stopColor="var(--chart-omzet)" stopOpacity="0" />
           </linearGradient>
           <linearGradient id="marginGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#22c55e" stopOpacity="0.14" />
@@ -132,16 +132,16 @@ function Chart({ data, tooltip, setTooltip }) {
         <path d={marginArea} fill="url(#marginGrad)" />
 
         {/* Lines */}
-        <path d={omzetPath} fill="none" stroke="#f59e0b" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+        <path d={omzetPath} fill="none" stroke="var(--chart-omzet)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
         <path d={marginPath} fill="none" stroke="#22c55e" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
 
         {/* Dots + hover targets */}
         {data.map((d, i) => (
           <g key={i}>
             {/* Omzet dot */}
-            <circle cx={xPos(i)} cy={yPos(d.omzet)} r={3.5} fill="#f59e0b" stroke="var(--bg-panel)" strokeWidth={1.5} />
+            <circle cx={xPos(i)} cy={yPos(d.omzet)} r={3.5} fill="var(--chart-omzet)" stroke="var(--bg-card)" strokeWidth={1.5} />
             {/* Margin dot */}
-            <circle cx={xPos(i)} cy={yPos(Math.max(d.margin, 0))} r={3.5} fill="#22c55e" stroke="var(--bg-panel)" strokeWidth={1.5} />
+            <circle cx={xPos(i)} cy={yPos(Math.max(d.margin, 0))} r={3.5} fill="#22c55e" stroke="var(--bg-card)" strokeWidth={1.5} />
 
             {/* X label */}
             <text
@@ -192,7 +192,7 @@ function TooltipBox({ tooltip, n, xPos, cW, padL, W }) {
       transform: alignRight ? 'translateX(-100%)' : 'translateX(8px)',
       background: 'var(--bg-elevated)',
       border: '1px solid var(--border-hover)',
-      borderRadius: 'var(--radius)',
+      borderRadius: 'var(--radius-md)',
       padding: '10px 14px',
       fontSize: 12,
       pointerEvents: 'none',
@@ -207,10 +207,10 @@ function TooltipBox({ tooltip, n, xPos, cW, padL, W }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
           <span style={{ color: 'var(--text-muted)' }}>Omzet</span>
-          <span style={{ color: '#f59e0b', fontWeight: 600 }}>{formatIDR(tooltip.omzet)}</span>
+          <span style={{ color: 'var(--chart-omzet)', fontWeight: 600 }}>{formatIDR(tooltip.omzet)}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16 }}>
-          <span style={{ color: 'var(--text-muted)' }}>Est. Margin</span>
+          <span style={{ color: 'var(--text-muted)' }}>Perkiraan untung</span>
           <span style={{ color: tooltip.margin >= 0 ? '#22c55e' : 'var(--error)', fontWeight: 600 }}>
             {formatIDR(tooltip.margin)}
           </span>

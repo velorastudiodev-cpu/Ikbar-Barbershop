@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import WebsiteClient from './WebsiteClient'
 
-export const metadata = { title: 'Kelola Website — Ikbar Dashboard' }
+export const metadata = { title: 'Kelola Website — Dinasti Dashboard' }
 
-export default async function WebsitePage() {
+export default async function WebsitePage({ searchParams }) {
+  const { tab } = await searchParams
   const supabase = await createClient()
 
   const [galleryRes, servicesRes, contentRes] = await Promise.all([
@@ -32,6 +33,7 @@ export default async function WebsitePage() {
       initialGallery={galleryRes.data || []}
       initialServices={servicesRes.data || []}
       siteContent={siteContent}
+      initialTab={tab}
     />
   )
 }

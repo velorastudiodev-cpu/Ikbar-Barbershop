@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -121,17 +122,12 @@ export default function LoginPage() {
         <div className="login-card">
           {/* Logo */}
           <div className="login-logo">
-            <div className="login-logo-mark">
-              <span>IB</span>
-            </div>
-            <div>
-              <div className="login-logo-title">Ikbar Barbershop</div>
-              <div className="login-logo-sub">Dashboard Admin</div>
-            </div>
+            <Image className="brand-logo" src="/logo-dinasti.png" alt="Dinasti Barbershop" width={290} height={233} priority />
+            <div className="login-logo-sub">Dashboard Admin</div>
           </div>
 
           <h1 className="login-heading">Masuk ke Dashboard</h1>
-          <p className="login-subheading">Hanya untuk Ikbar — akses terbatas</p>
+          <p className="login-subheading">Kelola penjualan, kas, dan isi website Dinasti.</p>
 
           {/* Google Login Button */}
           <div style={{ marginTop: '28px' }}>
@@ -162,7 +158,7 @@ export default function LoginPage() {
           </div>
 
           <div className="login-footer" style={{ marginTop: '32px' }}>
-            Akses terbatas · Hanya Ikbar Barbershop
+            Akses terbatas · Hanya akun admin Dinasti
           </div>
         </div>
       </div>

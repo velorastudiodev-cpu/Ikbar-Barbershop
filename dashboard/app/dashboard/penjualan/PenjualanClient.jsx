@@ -1,330 +1,277 @@
 'use client'
 
-import { useState, useActionState, useEffect, useRef } from 'react'
+import { useActionState, useState } from 'react'
 import { addSale, updateSale, deleteSale } from '@/app/actions/sales'
 import { updateCash } from '@/app/actions/cash'
 import { addHpp, updateHpp, deleteHpp } from '@/app/actions/hpp'
+import { ConfirmModal, Field, Icon, MoneyInput, Notice, PageHeader, TabPanel, Tabs, useActionToast, useTab, useToast } from '@/components/ui'
+import { formatDate, formatDateTime, formatIDR, monthRange, todayJakarta } from '@/lib/format'
 
-// ─── Helpers ─────────────────────────────────────────────────────────
-function formatIDR(v) {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency', currency: 'IDR',
-    minimumFractionDigits: 0, maximumFractionDigits: 0,
-  }).format(Number(v) || 0)
-}
-function formatDate(d) {
-  return new Date(d + 'T00:00:00').toLocaleDateString('id-ID', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  })
-}
-function todayISO() {
-  return new Date().toISOString().split('T')[0]
-}
-function fmtDatetime(ts) {
-  return new Date(ts).toLocaleDateString('id-ID', {
-    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
-  })
-}
+const HAIRCUT_PRICE = 25000 // used only for the "isi otomatis" shortcut; the field stays editable
 
-// ─── SVG Icons ───────────────────────────────────────────────────────
-const Ico = ({ d, size = 15 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-    <path d={d} />
-  </svg>
-)
-const IconPlus = ({ size = 15 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-const IconEdit = ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-const IconTrash = ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
-const IconCheck = ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-const IconX = ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-
-// ─── Toast ────────────────────────────────────────────────────────────
-function Toast({ msg, type = 'success', onClose }) {
-  useEffect(() => {
-    const t = setTimeout(onClose, 3200)
-    return () => clearTimeout(t)
-  }, [onClose])
+function RowActions({ onEdit, onDelete, what }) {
   return (
-    <div style={{
-      position: 'fixed', bottom: 24, right: 24, zIndex: 999,
-      display: 'flex', alignItems: 'center', gap: 10,
-      background: type === 'success' ? 'var(--success-dim)' : 'var(--error-dim)',
-      border: `1px solid ${type === 'success' ? 'rgba(74,222,128,.25)' : 'rgba(248,113,113,.25)'}`,
-      color: type === 'success' ? 'var(--success)' : 'var(--error)',
-      padding: '10px 16px', borderRadius: 'var(--radius-md)',
-      fontSize: 13, fontWeight: 500, boxShadow: '0 8px 32px rgba(0,0,0,.5)',
-      animation: 'slideInToast .25s var(--ease-out)',
-    }}>
-      {type === 'success' ? <IconCheck size={14} /> : <IconX size={14} />}
-      {msg}
+    <div className="row-actions">
+      <button type="button" className="btn-icon" onClick={onEdit} aria-label={`Ubah ${what}`}><Icon name="edit" size={15} /><span>Ubah</span></button>
+      <button type="button" className="btn-icon btn-icon-danger" onClick={onDelete} aria-label={`Hapus ${what}`}><Icon name="trash" size={15} /><span>Hapus</span></button>
     </div>
   )
 }
 
-// ─── Confirm Modal ────────────────────────────────────────────────────
-function ConfirmModal({ message, onConfirm, onCancel }) {
+function Stepper({ id, name, value, onChange }) {
+  const n = Number(value) || 0
   return (
-    <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14, lineHeight: 1.6 }}>{message}</p>
-        <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
-          <button className="btn btn-ghost" onClick={onCancel} style={{ fontSize: 13 }}>Batal</button>
-          <button className="btn btn-danger" onClick={onConfirm} style={{ fontSize: 13 }}>Hapus</button>
-        </div>
+    <div className="stepper">
+      <button type="button" onClick={() => onChange(String(Math.max(0, n - 1)))} aria-label="Kurangi satu"><Icon name="minus" size={18} /></button>
+      <input id={id} name={name} className="form-input" type="number" inputMode="numeric" min="0" required value={value}
+        onChange={(e) => onChange(e.target.value)} placeholder="0" />
+      <button type="button" onClick={() => onChange(String(n + 1))} aria-label="Tambah satu"><Icon name="plus" size={18} /></button>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// PENJUALAN HARIAN
+// ═══════════════════════════════════════════════════════════════════════
+function SaleEditRow({ sale, action, pending, error, onCancel }) {
+  return (
+    <form action={action} className="edit-form">
+      <input type="hidden" name="id" value={sale.id} />
+      <div className="form-row">
+        <Field label="Tanggal" id={`ed-date-${sale.id}`} type="date" name="date" defaultValue={sale.date} required />
+        <Field label="Pelanggan" id={`ed-trx-${sale.id}`} type="number" name="total_trx" defaultValue={sale.total_trx} min="0" inputMode="numeric" required />
+        <Field label="Omzet" id={`ed-omzet-${sale.id}`} required><MoneyInput id={`ed-omzet-${sale.id}`} name="total_omzet" defaultValue={sale.total_omzet} required /></Field>
+        <Field label="Catatan" id={`ed-notes-${sale.id}`} name="notes" defaultValue={sale.notes || ''} />
       </div>
-    </div>
+      {error && <div className="form-error">{error}</div>}
+      <div className="form-actions">
+        <button type="submit" className="btn btn-primary" disabled={pending}><Icon name="check" size={15} /> {pending ? 'Menyimpan…' : 'Simpan'}</button>
+        <button type="button" className="btn btn-ghost" onClick={onCancel}>Batal</button>
+      </div>
+    </form>
   )
 }
 
-// ─── Form Field ───────────────────────────────────────────────────────
-function Field({ label, id, type = 'text', placeholder, defaultValue, name, required, min, step, children, hint }) {
-  return (
-    <div className="form-group">
-      <label className="form-label" htmlFor={id}>{label}{required && <span style={{ color: 'var(--error)', marginLeft: 3 }}>*</span>}</label>
-      {children || (
-        <input
-          id={id} name={name || id} type={type}
-          className="form-input"
-          placeholder={placeholder}
-          defaultValue={defaultValue}
-          required={required}
-          min={min} step={step}
-        />
-      )}
-      {hint && <span style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 3 }}>{hint}</span>}
-    </div>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// TAB 1 — PENJUALAN
-// ═══════════════════════════════════════════════════════════════════════
-function TabPenjualan({ sales, onToast }) {
+function TabPenjualan({ sales, toast }) {
+  const today = todayJakarta()
+  const [date, setDate] = useState(today)
+  const [trx, setTrx] = useState('')
+  const [omzet, setOmzet] = useState('')
+  const [notes, setNotes] = useState('')
+  const [editRow, setEditRow] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [showAll, setShowAll] = useState(false)
   const [addState, addAction, addPending] = useActionState(addSale, null)
   const [editState, editAction, editPending] = useActionState(updateSale, null)
-  const [editRow, setEditRow] = useState(null) // ID yang sedang di-edit
-  const [deleteTarget, setDeleteTarget] = useState(null)
-  const addFormRef = useRef(null)
 
-  // Toast setelah add
-  useEffect(() => {
-    if (addState?.success) {
-      onToast('Penjualan berhasil ditambahkan')
-      addFormRef.current?.reset()
-      addFormRef.current?.querySelector('[name="date"]')?.setAttribute('value', todayISO())
-    }
-    if (addState?.error) onToast(addState.error, 'error')
-  }, [addState])
+  useActionToast(addState, toast, 'Penjualan tersimpan', () => { setTrx(''); setOmzet(''); setNotes('') })
+  useActionToast(editState, toast, 'Penjualan diperbarui', () => setEditRow(null))
 
-  // Toast setelah edit
-  useEffect(() => {
-    if (editState?.success) {
-      onToast('Penjualan berhasil diupdate')
-      setEditRow(null)
-    }
-    if (editState?.error) onToast(editState.error, 'error')
-  }, [editState])
+  const sameDay = sales.filter((s) => s.date === date)
+  const { start, end } = monthRange(today)
+  const thisMonth = sales.filter((s) => s.date >= start && s.date <= end)
+  const monthTrx = thisMonth.reduce((a, s) => a + Number(s.total_trx || 0), 0)
+  const monthOmzet = thisMonth.reduce((a, s) => a + Number(s.total_omzet || 0), 0)
+  const visible = showAll ? sales : sales.slice(0, 14)
 
   const handleDelete = async () => {
     const res = await deleteSale(deleteTarget)
     setDeleteTarget(null)
-    if (res?.error) onToast(res.error, 'error')
-    else onToast('Penjualan dihapus')
+    if (res?.error) toast(res.error, 'error')
+    else toast('Penjualan dihapus')
   }
 
   return (
-    <div>
-      {/* Form tambah */}
-      <div className="panel" style={{ marginBottom: 20 }}>
+    <div className="stack">
+      <div className="panel">
         <div className="panel-header">
-          <div className="panel-title">Catat Penjualan Harian</div>
+          <div>
+            <div className="panel-title">Catat penjualan</div>
+            <div className="panel-sub">Isi sekali di akhir hari: berapa pelanggan dan berapa uang yang masuk.</div>
+          </div>
         </div>
         <div className="panel-body">
-          <form ref={addFormRef} action={addAction}>
+          <form action={addAction}>
             <div className="form-row">
-              <Field label="Tanggal" id="date" type="date" name="date" defaultValue={todayISO()} required />
-              <Field label="Jumlah Transaksi" id="total_trx" type="number" name="total_trx" placeholder="Misal: 8" min="0" required hint="Jumlah pelanggan / sesi hari ini" />
-              <Field label="Total Omzet (Rp)" id="total_omzet" type="number" name="total_omzet" placeholder="Misal: 200000" min="0" step="500" required />
-              <Field label="Catatan" id="notes" name="notes" placeholder="Opsional" />
+              <div className="form-group">
+                <label className="form-label" htmlFor="date">Tanggal<span className="req" aria-hidden="true">*</span></label>
+                <input id="date" name="date" type="date" className="form-input" value={date} max={today} required onChange={(e) => setDate(e.target.value)} />
+                <div className="chips">
+                  <button type="button" className={`chip${date === today ? ' active' : ''}`} onClick={() => setDate(today)}>Hari ini</button>
+                  <button type="button" className={`chip${date === todayJakarta(-1) ? ' active' : ''}`} onClick={() => setDate(todayJakarta(-1))}>Kemarin</button>
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="total_trx">Jumlah pelanggan<span className="req" aria-hidden="true">*</span></label>
+                <Stepper id="total_trx" name="total_trx" value={trx} onChange={setTrx} />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="total_omzet">Total uang masuk<span className="req" aria-hidden="true">*</span></label>
+                <MoneyInput id="total_omzet" name="total_omzet" value={omzet} onChange={setOmzet} required />
+                {Number(trx) > 0 && (
+                  <div className="chips">
+                    <button type="button" className="chip" onClick={() => setOmzet(String(Number(trx) * HAIRCUT_PRICE))}>
+                      Isi otomatis: {trx} × {formatIDR(HAIRCUT_PRICE)}
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="notes">Catatan <span className="optional">(opsional)</span></label>
+                <input id="notes" name="notes" className="form-input" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Misal: ramai malam minggu" />
+              </div>
             </div>
-            {addState?.error && (
-              <div className="form-error" style={{ marginBottom: 12 }}>{addState.error}</div>
+
+            {sameDay.length > 0 && (
+              <Notice tone="warn">
+                <b>{formatDate(date, { weekday: 'long', day: 'numeric', month: 'long' })} sudah dicatat</b>{' '}
+                ({sameDay.reduce((a, s) => a + Number(s.total_trx), 0)} pelanggan, {formatIDR(sameDay.reduce((a, s) => a + Number(s.total_omzet), 0))}).
+                Kalau angkanya salah, lebih baik <button type="button" className="link-btn" onClick={() => { setShowAll(true); setEditRow(sameDay[0].id) }}>ubah data itu</button> daripada menambah baru.
+              </Notice>
             )}
-            <button type="submit" className="btn btn-primary" disabled={addPending} id="btn-tambah-penjualan">
-              <IconPlus size={14} />
-              {addPending ? 'Menyimpan...' : 'Tambah'}
-            </button>
+            {addState?.error && <div className="form-error">{addState.error}</div>}
+            <div className="form-actions">
+              <button type="submit" className="btn btn-primary btn-lg" disabled={addPending || !trx || !omzet} id="btn-tambah-penjualan">
+                <Icon name="check" size={16} strokeWidth={2.2} /> {addPending ? 'Menyimpan…' : 'Simpan penjualan'}
+              </button>
+            </div>
           </form>
         </div>
       </div>
 
-      {/* Tabel riwayat */}
       <div className="panel">
         <div className="panel-header">
-          <div className="panel-title">Riwayat Penjualan</div>
-          <div className="panel-sub">{sales.length} entri</div>
+          <div>
+            <div className="panel-title">Riwayat penjualan</div>
+            <div className="panel-sub">Bulan ini: {monthTrx} pelanggan · {formatIDR(monthOmzet)}</div>
+          </div>
         </div>
         {sales.length === 0 ? (
-          <div className="empty-state"><p>Belum ada data penjualan. Tambah penjualan pertama di atas.</p></div>
+          <div className="empty-state"><Icon name="trend" size={28} /><p>Belum ada data penjualan. Catat penjualan pertama di atas.</p></div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <>
             <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Tanggal</th>
-                  <th style={{ textAlign: 'right' }}>Transaksi</th>
-                  <th style={{ textAlign: 'right' }}>Omzet</th>
-                  <th>Catatan</th>
-                  <th style={{ width: 90 }}></th>
-                </tr>
-              </thead>
+              <thead><tr><th>Tanggal</th><th className="num">Pelanggan</th><th className="num">Omzet</th><th>Catatan</th><th><span className="sr-only">Aksi</span></th></tr></thead>
               <tbody>
-                {sales.map(s => (
-                  editRow === s.id ? (
-                    <tr key={s.id} style={{ background: 'var(--bg-hover)' }}>
-                      <td colSpan={5}>
-                        <form action={editAction} style={{ padding: '12px 0' }}>
-                          <input type="hidden" name="id" value={s.id} />
-                          <div className="form-row" style={{ marginBottom: 10 }}>
-                            <Field label="Tanggal" id={`ed-date-${s.id}`} type="date" name="date" defaultValue={s.date} required />
-                            <Field label="Transaksi" id={`ed-trx-${s.id}`} type="number" name="total_trx" defaultValue={s.total_trx} min="0" required />
-                            <Field label="Omzet (Rp)" id={`ed-omzet-${s.id}`} type="number" name="total_omzet" defaultValue={s.total_omzet} min="0" step="500" required />
-                            <Field label="Catatan" id={`ed-notes-${s.id}`} name="notes" defaultValue={s.notes || ''} />
-                          </div>
-                          {editState?.error && <div className="form-error" style={{ marginBottom: 10 }}>{editState.error}</div>}
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <button type="submit" className="btn btn-primary" disabled={editPending} style={{ fontSize: 12, padding: '6px 14px' }}>
-                              <IconCheck size={13} /> Simpan
-                            </button>
-                            <button type="button" className="btn btn-ghost" onClick={() => setEditRow(null)} style={{ fontSize: 12, padding: '6px 14px' }}>
-                              Batal
-                            </button>
-                          </div>
-                        </form>
-                      </td>
-                    </tr>
-                  ) : (
-                    <tr key={s.id}>
-                      <td>{formatDate(s.date)}</td>
-                      <td style={{ textAlign: 'right' }}>{s.total_trx} <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>org</span></td>
-                      <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: 'var(--success)' }}>{formatIDR(s.total_omzet)}</td>
-                      <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>{s.notes || '—'}</td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                          <button className="btn-icon" onClick={() => setEditRow(s.id)} title="Edit" aria-label="Edit penjualan">
-                            <IconEdit size={13} />
-                          </button>
-                          <button className="btn-icon btn-icon-danger" onClick={() => setDeleteTarget(s.id)} title="Hapus" aria-label="Hapus penjualan">
-                            <IconTrash size={13} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
+                {visible.map((s) => editRow === s.id ? (
+                  <tr key={s.id} className="is-editing"><td colSpan={5}>
+                    <SaleEditRow sale={s} action={editAction} pending={editPending} error={editState?.error} onCancel={() => setEditRow(null)} />
+                  </td></tr>
+                ) : (
+                  <tr key={s.id}>
+                    <td data-label="Tanggal" className="cell-title">{formatDate(s.date, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                    <td data-label="Pelanggan" className="num">{s.total_trx} org</td>
+                    <td data-label="Omzet" className="num money">{formatIDR(s.total_omzet)}</td>
+                    <td data-label="Catatan" className={`muted${s.notes ? '' : ' is-empty'}`}>{s.notes || '—'}</td>
+                    <td className="cell-actions"><RowActions what="penjualan" onEdit={() => setEditRow(s.id)} onDelete={() => setDeleteTarget(s.id)} /></td>
+                  </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+            {sales.length > visible.length && (
+              <div className="panel-foot"><button type="button" className="btn btn-ghost" onClick={() => setShowAll(true)}>Tampilkan semua ({sales.length})</button></div>
+            )}
+          </>
         )}
       </div>
 
       {deleteTarget && (
-        <ConfirmModal
-          message="Yakin hapus data penjualan ini? Data yang dihapus tidak bisa dikembalikan."
-          onConfirm={handleDelete}
-          onCancel={() => setDeleteTarget(null)}
-        />
+        <ConfirmModal title="Hapus penjualan?" message="Data yang dihapus tidak bisa dikembalikan." onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />
       )}
     </div>
   )
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// TAB 2 — KAS
+// KAS
 // ═══════════════════════════════════════════════════════════════════════
-function TabKas({ cash, cashLog, onToast }) {
-  const [cashState, cashAction, cashPending] = useActionState(updateCash, null)
-  const [currentBalance, setCurrentBalance] = useState(Number(cash.balance))
-  const formRef = useRef(null)
+const CASH_MODES = [
+  { id: 'in', label: 'Uang masuk', icon: 'plus', note: 'Uang masuk' },
+  { id: 'out', label: 'Uang keluar', icon: 'minus', note: 'Uang keluar' },
+  { id: 'set', label: 'Atur saldo', icon: 'edit', note: 'Saldo diatur ulang' },
+]
 
-  useEffect(() => {
-    if (cashState?.success) {
-      onToast('Saldo kas berhasil diupdate')
-      if (cashState.newBalance !== undefined) setCurrentBalance(cashState.newBalance)
-      formRef.current?.reset()
-    }
-    if (cashState?.error) onToast(cashState.error, 'error')
-  }, [cashState])
+function TabKas({ cash, cashLog, toast }) {
+  const balance = Number(cash.balance) || 0
+  const [mode, setMode] = useState('in')
+  const [amount, setAmount] = useState('')
+  const [notes, setNotes] = useState('')
+  const [cashState, cashAction, cashPending] = useActionState(updateCash, null)
+  useActionToast(cashState, toast, 'Saldo kas diperbarui', () => { setAmount(''); setNotes('') })
+
+  const n = Number(amount) || 0
+  const next = mode === 'in' ? balance + n : mode === 'out' ? balance - n : n
+  const current = CASH_MODES.find((m) => m.id === mode)
 
   return (
-    <div>
-      {/* Current balance card */}
-      <div className="kas-balance-card" style={{ marginBottom: 20 }}>
-        <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 10 }}>Saldo Kas Saat Ini</div>
-        <div style={{ fontSize: '2.4rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.04em', lineHeight: 1 }}>
-          {formatIDR(currentBalance)}
-        </div>
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
-          Terakhir diupdate: {cash.updated_at ? fmtDatetime(cash.updated_at) : '—'}
-        </div>
+    <div className="stack">
+      <div className="balance-card">
+        <span>Saldo kas sekarang</span>
+        <strong>{formatIDR(balance)}</strong>
+        <small>Terakhir diubah: {cash.updated_at ? formatDateTime(cash.updated_at) : '—'}</small>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: 16 }}>
-        {/* Form update kas */}
+      <div className="split">
         <div className="panel">
-          <div className="panel-header"><div className="panel-title">Update Saldo Kas</div></div>
+          <div className="panel-header"><div className="panel-title">Ubah saldo</div></div>
           <div className="panel-body">
-            <form ref={formRef} action={cashAction}>
-              <Field label="Saldo Baru (Rp)" id="balance" type="number" name="balance" placeholder="Nominal saldo baru" min="0" step="500" required hint="Masukkan total uang yang kamu pegang sekarang" />
-              <div style={{ marginTop: 12 }}>
-                <Field label="Keterangan" id="cash-notes" name="notes" placeholder="Misal: setoran harian, ambil buat modal" />
+            <form action={cashAction}>
+              <div className="segmented" role="radiogroup" aria-label="Jenis perubahan">
+                {CASH_MODES.map((m) => (
+                  <button key={m.id} type="button" role="radio" aria-checked={mode === m.id} className={mode === m.id ? 'active' : ''} onClick={() => setMode(m.id)}>
+                    <Icon name={m.icon} size={15} /> {m.label}
+                  </button>
+                ))}
               </div>
-              {cashState?.error && <div className="form-error" style={{ margin: '10px 0' }}>{cashState.error}</div>}
-              <button type="submit" className="btn btn-primary" disabled={cashPending} style={{ marginTop: 14, width: '100%' }} id="btn-update-kas">
-                {cashPending ? 'Menyimpan...' : 'Simpan Saldo'}
-              </button>
+              <Field label={mode === 'set' ? 'Saldo yang benar sekarang' : 'Jumlah uang'} id="cash-amount" required>
+                <MoneyInput id="cash-amount" value={amount} onChange={setAmount} required />
+              </Field>
+              <Field label="Keterangan" id="cash-notes">
+                <input id="cash-notes" className="form-input" value={notes} onChange={(e) => setNotes(e.target.value)}
+                  placeholder={mode === 'out' ? 'Misal: beli pisau cukur' : 'Misal: setoran hari ini'} />
+              </Field>
+              {/* The server action still receives the new balance, exactly as before. */}
+              <input type="hidden" name="balance" value={next} />
+              <input type="hidden" name="notes" value={notes || current.note} />
+              {amount !== '' && (
+                <div className={`preview-line${next < 0 ? ' is-bad' : ''}`}>
+                  {next < 0 ? 'Saldo tidak boleh minus.' : <>Saldo jadi <b>{formatIDR(next)}</b>{mode !== 'set' && <> ({mode === 'in' ? '+' : '−'}{formatIDR(n)})</>}</>}
+                </div>
+              )}
+              {cashState?.error && <div className="form-error">{cashState.error}</div>}
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={cashPending || amount === '' || next < 0} id="btn-update-kas">
+                  <Icon name="check" size={16} strokeWidth={2.2} /> {cashPending ? 'Menyimpan…' : 'Simpan'}
+                </button>
+              </div>
             </form>
           </div>
         </div>
 
-        {/* Riwayat perubahan kas */}
         <div className="panel">
           <div className="panel-header">
-            <div className="panel-title">Riwayat Kas</div>
-            <div className="panel-sub">{cashLog.length} perubahan</div>
+            <div className="panel-title">Riwayat kas</div>
+            <div className="panel-sub">{cashLog.length} perubahan terakhir</div>
           </div>
           {cashLog.length === 0 ? (
-            <div className="empty-state"><p>Belum ada riwayat perubahan kas.</p></div>
+            <div className="empty-state"><Icon name="wallet" size={28} /><p>Belum ada riwayat perubahan kas.</p></div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Waktu</th>
-                    <th style={{ textAlign: 'right' }}>Sebelum</th>
-                    <th style={{ textAlign: 'right' }}>Selisih</th>
-                    <th style={{ textAlign: 'right' }}>Sesudah</th>
-                    <th>Ket.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cashLog.map(log => {
-                    const isPositive = Number(log.change_amount) >= 0
-                    return (
-                      <tr key={log.id}>
-                        <td style={{ fontSize: 11.5 }}>{fmtDatetime(log.created_at)}</td>
-                        <td style={{ textAlign: 'right', fontSize: 12 }}>{formatIDR(log.balance_before)}</td>
-                        <td style={{ textAlign: 'right', color: isPositive ? 'var(--success)' : 'var(--error)', fontWeight: 600, fontSize: 12 }}>
-                          {isPositive ? '+' : ''}{formatIDR(log.change_amount)}
-                        </td>
-                        <td style={{ textAlign: 'right', fontSize: 12 }}>{formatIDR(log.balance_after)}</td>
-                        <td style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>{log.notes || '—'}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <table className="data-table">
+              <thead><tr><th>Waktu</th><th>Keterangan</th><th className="num">Perubahan</th><th className="num">Saldo</th></tr></thead>
+              <tbody>
+                {cashLog.map((log) => {
+                  const up = Number(log.change_amount) >= 0
+                  return (
+                    <tr key={log.id}>
+                      <td data-label="Waktu" className="muted">{formatDateTime(log.created_at)}</td>
+                      <td data-label="Keterangan" className="cell-title">{log.notes || '—'}</td>
+                      <td data-label="Perubahan" className={`num ${up ? 'money' : 'money-out'}`}>{up ? '+' : '−'}{formatIDR(Math.abs(log.change_amount))}</td>
+                      <td data-label="Saldo" className="num">{formatIDR(log.balance_after)}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           )}
         </div>
       </div>
@@ -333,282 +280,162 @@ function TabKas({ cash, cashLog, onToast }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// TAB 3 — HPP
+// MODAL (HPP)
 // ═══════════════════════════════════════════════════════════════════════
-function TabHpp({ hpp, onToast }) {
-  const [addState, addAction, addPending] = useActionState(addHpp, null)
-  const [editState, editAction, editPending] = useActionState(updateHpp, null)
+const HPP_CATEGORIES = ['Layanan', 'Produk', 'Operasional', 'Lainnya']
+
+function MarginPreview({ price, cost }) {
+  if (!price) return null
+  const margin = Number(price) - Number(cost || 0)
+  return (
+    <div className={`preview-line${margin < 0 ? ' is-bad' : ''}`}>
+      Untung per item: <b>{formatIDR(margin)}</b> ({Math.round((margin / Number(price)) * 100)}%)
+    </div>
+  )
+}
+
+function HppEditRow({ item, action, pending, error, onCancel }) {
+  const [price, setPrice] = useState(String(Math.round(item.selling_price)))
+  const [cost, setCost] = useState(String(Math.round(item.cost)))
+  return (
+    <form action={action} className="edit-form">
+      <input type="hidden" name="id" value={item.id} />
+      <div className="form-row">
+        <Field label="Nama" id={`eh-name-${item.id}`} name="item_name" defaultValue={item.item_name} required />
+        <Field label="Kategori" id={`eh-cat-${item.id}`}>
+          <select id={`eh-cat-${item.id}`} name="category" className="form-input" defaultValue={item.category}>
+            {HPP_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </Field>
+        <Field label="Harga jual" id={`eh-sp-${item.id}`} required><MoneyInput id={`eh-sp-${item.id}`} name="selling_price" value={price} onChange={setPrice} required /></Field>
+        <Field label="Modal" id={`eh-cost-${item.id}`} required><MoneyInput id={`eh-cost-${item.id}`} name="cost" value={cost} onChange={setCost} required /></Field>
+        <Field label="Satuan" id={`eh-unit-${item.id}`} name="unit" defaultValue={item.unit || ''} />
+        <Field label="Catatan" id={`eh-notes-${item.id}`} name="notes" defaultValue={item.notes || ''} />
+      </div>
+      <MarginPreview price={price} cost={cost} />
+      {error && <div className="form-error">{error}</div>}
+      <div className="form-actions">
+        <button type="submit" className="btn btn-primary" disabled={pending}><Icon name="check" size={15} /> {pending ? 'Menyimpan…' : 'Simpan'}</button>
+        <button type="button" className="btn btn-ghost" onClick={onCancel}>Batal</button>
+      </div>
+    </form>
+  )
+}
+
+function TabHpp({ hpp, toast }) {
+  const [price, setPrice] = useState('')
+  const [cost, setCost] = useState('')
+  const [form, setForm] = useState(null)
   const [editRow, setEditRow] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
-  const addFormRef = useRef(null)
-
-  useEffect(() => {
-    if (addState?.success) { onToast('Item HPP berhasil ditambahkan'); addFormRef.current?.reset() }
-    if (addState?.error) onToast(addState.error, 'error')
-  }, [addState])
-
-  useEffect(() => {
-    if (editState?.success) { onToast('Item HPP berhasil diupdate'); setEditRow(null) }
-    if (editState?.error) onToast(editState.error, 'error')
-  }, [editState])
+  const [addState, addAction, addPending] = useActionState(addHpp, null)
+  const [editState, editAction, editPending] = useActionState(updateHpp, null)
+  useActionToast(addState, toast, 'Item modal ditambahkan', () => { setPrice(''); setCost(''); form?.reset() })
+  useActionToast(editState, toast, 'Item modal diperbarui', () => setEditRow(null))
 
   const handleDelete = async () => {
     const res = await deleteHpp(deleteTarget)
     setDeleteTarget(null)
-    if (res?.error) onToast(res.error, 'error')
-    else onToast('Item HPP dihapus')
+    if (res?.error) toast(res.error, 'error')
+    else toast('Item modal dihapus')
   }
 
-  const categories = ['Layanan', 'Produk', 'Operasional', 'Lainnya']
-
   return (
-    <div>
-      {/* Form tambah HPP */}
-      <div className="panel" style={{ marginBottom: 20 }}>
-        <div className="panel-header"><div className="panel-title">Tambah Item HPP</div></div>
+    <div className="stack">
+      <Notice>
+        <b>Apa itu HPP?</b> Biaya modal untuk satu layanan atau produk (misal pisau, bedak, listrik per potong).
+        Rata-rata modal kategori <b>Layanan</b> dipakai untuk menghitung perkiraan untung di Ringkasan.
+      </Notice>
+
+      <div className="panel">
+        <div className="panel-header"><div className="panel-title">Tambah item modal</div></div>
         <div className="panel-body">
-          <form ref={addFormRef} action={addAction}>
+          <form ref={setForm} action={addAction}>
             <div className="form-row">
-              <Field label="Nama Layanan / Item" id="item_name" name="item_name" placeholder="Misal: Crew Cut, Pomade" required />
-              <Field label="Kategori" id="category" name="category">
+              <Field label="Nama layanan / barang" id="item_name" name="item_name" placeholder="Misal: Crew Cut, Pomade" required />
+              <Field label="Kategori" id="category">
                 <select id="category" name="category" className="form-input">
-                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                  {HPP_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </Field>
-              <Field label="Harga Jual (Rp)" id="selling_price" type="number" name="selling_price" placeholder="Misal: 25000" min="0" step="500" required />
-              <Field label="HPP / Biaya Modal (Rp)" id="cost" type="number" name="cost" placeholder="Misal: 5000" min="0" step="500" required hint="Biaya modal per layanan/item ini" />
-              <Field label="Satuan" id="unit" name="unit" placeholder="per sesi, per botol (opsional)" />
+              <Field label="Harga jual" id="selling_price" required><MoneyInput id="selling_price" name="selling_price" value={price} onChange={setPrice} placeholder="25.000" required /></Field>
+              <Field label="Modal per item" id="cost" required hint="Biaya yang keluar untuk satu kali layanan / satu barang">
+                <MoneyInput id="cost" name="cost" value={cost} onChange={setCost} placeholder="5.000" required />
+              </Field>
+              <Field label="Satuan" id="unit" name="unit" placeholder="per sesi, per pcs (opsional)" />
               <Field label="Catatan" id="hpp-notes" name="notes" placeholder="Opsional" />
             </div>
-            {addState?.error && <div className="form-error" style={{ marginBottom: 12 }}>{addState.error}</div>}
-            <button type="submit" className="btn btn-primary" disabled={addPending} id="btn-tambah-hpp">
-              <IconPlus size={14} />
-              {addPending ? 'Menyimpan...' : 'Tambah Item'}
-            </button>
+            <MarginPreview price={price} cost={cost} />
+            {addState?.error && <div className="form-error">{addState.error}</div>}
+            <div className="form-actions">
+              <button type="submit" className="btn btn-primary" disabled={addPending} id="btn-tambah-hpp">
+                <Icon name="plus" size={15} /> {addPending ? 'Menyimpan…' : 'Tambah item'}
+              </button>
+            </div>
           </form>
         </div>
       </div>
 
-      {/* Tabel HPP */}
       <div className="panel">
         <div className="panel-header">
-          <div className="panel-title">Daftar HPP</div>
+          <div className="panel-title">Daftar modal</div>
           <div className="panel-sub">{hpp.length} item</div>
         </div>
         {hpp.length === 0 ? (
-          <div className="empty-state"><p>Belum ada item HPP. Tambah item di atas.</p></div>
+          <div className="empty-state"><Icon name="box" size={28} /><p>Belum ada item modal. Tambah item di atas.</p></div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Nama</th>
-                  <th>Kategori</th>
-                  <th style={{ textAlign: 'right' }}>Harga Jual</th>
-                  <th style={{ textAlign: 'right' }}>HPP</th>
-                  <th style={{ textAlign: 'right' }}>Margin</th>
-                  <th>Satuan</th>
-                  <th style={{ width: 90 }}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {hpp.map(h => {
-                  const margin = Number(h.selling_price) - Number(h.cost)
-                  const marginPct = h.selling_price > 0
-                    ? ((margin / h.selling_price) * 100).toFixed(0)
-                    : 0
-                  return editRow === h.id ? (
-                    <tr key={h.id} style={{ background: 'var(--bg-hover)' }}>
-                      <td colSpan={7}>
-                        <form action={editAction} style={{ padding: '12px 0' }}>
-                          <input type="hidden" name="id" value={h.id} />
-                          <div className="form-row" style={{ marginBottom: 10 }}>
-                            <Field label="Nama" id={`eh-name-${h.id}`} name="item_name" defaultValue={h.item_name} required />
-                            <Field label="Kategori" id={`eh-cat-${h.id}`} name="category">
-                              <select id={`eh-cat-${h.id}`} name="category" className="form-input" defaultValue={h.category}>
-                                {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                              </select>
-                            </Field>
-                            <Field label="Harga Jual" id={`eh-sp-${h.id}`} type="number" name="selling_price" defaultValue={h.selling_price} min="0" step="500" required />
-                            <Field label="HPP" id={`eh-cost-${h.id}`} type="number" name="cost" defaultValue={h.cost} min="0" step="500" required />
-                            <Field label="Satuan" id={`eh-unit-${h.id}`} name="unit" defaultValue={h.unit || ''} />
-                            <Field label="Catatan" id={`eh-notes-${h.id}`} name="notes" defaultValue={h.notes || ''} />
-                          </div>
-                          {editState?.error && <div className="form-error" style={{ marginBottom: 10 }}>{editState.error}</div>}
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <button type="submit" className="btn btn-primary" disabled={editPending} style={{ fontSize: 12, padding: '6px 14px' }}>
-                              <IconCheck size={13} /> Simpan
-                            </button>
-                            <button type="button" className="btn btn-ghost" onClick={() => setEditRow(null)} style={{ fontSize: 12, padding: '6px 14px' }}>
-                              Batal
-                            </button>
-                          </div>
-                        </form>
-                      </td>
-                    </tr>
-                  ) : (
-                    <tr key={h.id}>
-                      <td style={{ fontWeight: 500 }}>{h.item_name}</td>
-                      <td><span className="badge badge-neutral">{h.category}</span></td>
-                      <td style={{ textAlign: 'right' }}>{formatIDR(h.selling_price)}</td>
-                      <td style={{ textAlign: 'right', color: 'var(--error)' }}>{formatIDR(h.cost)}</td>
-                      <td style={{ textAlign: 'right' }}>
-                        <span style={{ color: margin >= 0 ? 'var(--success)' : 'var(--error)', fontWeight: 600 }}>
-                          {formatIDR(margin)}
-                        </span>
-                        <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 4 }}>({marginPct}%)</span>
-                      </td>
-                      <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{h.unit || '—'}</td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                          <button className="btn-icon" onClick={() => setEditRow(h.id)} title="Edit" aria-label="Edit HPP">
-                            <IconEdit size={13} />
-                          </button>
-                          <button className="btn-icon btn-icon-danger" onClick={() => setDeleteTarget(h.id)} title="Hapus" aria-label="Hapus HPP">
-                            <IconTrash size={13} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+          <table className="data-table">
+            <thead><tr><th>Nama</th><th>Kategori</th><th className="num">Harga jual</th><th className="num">Modal</th><th className="num">Untung</th><th><span className="sr-only">Aksi</span></th></tr></thead>
+            <tbody>
+              {hpp.map((h) => {
+                const margin = Number(h.selling_price) - Number(h.cost)
+                const pct = h.selling_price > 0 ? Math.round((margin / h.selling_price) * 100) : 0
+                return editRow === h.id ? (
+                  <tr key={h.id} className="is-editing"><td colSpan={6}>
+                    <HppEditRow item={h} action={editAction} pending={editPending} error={editState?.error} onCancel={() => setEditRow(null)} />
+                  </td></tr>
+                ) : (
+                  <tr key={h.id}>
+                    <td data-label="Nama" className="cell-title">{h.item_name}{h.unit && <small className="muted"> · {h.unit}</small>}</td>
+                    <td data-label="Kategori"><span className="badge badge-neutral">{h.category}</span></td>
+                    <td data-label="Harga jual" className="num">{formatIDR(h.selling_price)}</td>
+                    <td data-label="Modal" className="num">{formatIDR(h.cost)}</td>
+                    <td data-label="Untung" className={`num ${margin >= 0 ? 'money' : 'money-out'}`}>{formatIDR(margin)} <small className="muted">({pct}%)</small></td>
+                    <td className="cell-actions"><RowActions what="item modal" onEdit={() => setEditRow(h.id)} onDelete={() => setDeleteTarget(h.id)} /></td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         )}
       </div>
 
-      {deleteTarget && (
-        <ConfirmModal
-          message="Yakin hapus item HPP ini?"
-          onConfirm={handleDelete}
-          onCancel={() => setDeleteTarget(null)}
-        />
-      )}
+      {deleteTarget && <ConfirmModal title="Hapus item modal?" message="Item ini tidak lagi dipakai untuk menghitung perkiraan untung." onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />}
     </div>
   )
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// MAIN CLIENT COMPONENT
-// ═══════════════════════════════════════════════════════════════════════
-export default function PenjualanClient({ initialSales, initialCash, initialCashLog, initialHpp }) {
-  const [activeTab, setActiveTab] = useState('penjualan')
-  const [toast, setToast] = useState(null)
+const TABS = [
+  { id: 'penjualan', label: 'Penjualan harian', icon: 'trend' },
+  { id: 'kas', label: 'Kas', icon: 'wallet' },
+  { id: 'hpp', label: 'Modal (HPP)', icon: 'box' },
+]
 
-  const showToast = (msg, type = 'success') => setToast({ msg, type, key: Date.now() })
-
-  const TABS = [
-    { id: 'penjualan', label: 'Penjualan' },
-    { id: 'kas', label: 'Kas' },
-    { id: 'hpp', label: 'HPP' },
-  ]
+export default function PenjualanClient({ initialSales, initialCash, initialCashLog, initialHpp, initialTab }) {
+  const [tab, setTab] = useTab(initialTab, TABS.map((t) => t.id))
+  const [toastEl, toast] = useToast()
 
   return (
     <>
-      <style>{`
-        @keyframes slideInToast {
-          from { opacity: 0; transform: translateY(12px); }
-          to   { opacity: 1; transform: none; }
-        }
-        .tab-nav {
-          display: flex; gap: 4; padding: 4px;
-          background: var(--bg-elevated); border: 1px solid var(--border);
-          border-radius: var(--radius-md); width: fit-content; margin-bottom: 20px;
-        }
-        .tab-btn {
-          padding: 7px 18px; border-radius: 8px; font-size: 13px; font-weight: 500;
-          color: var(--text-muted); transition: all .15s var(--ease-out);
-          cursor: pointer; background: none; border: none;
-        }
-        .tab-btn:hover { color: var(--text-secondary); }
-        .tab-btn.active { background: var(--bg-active); color: var(--text-primary); }
-        .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .data-table th {
-          padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600;
-          color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em;
-          border-bottom: 1px solid var(--border); white-space: nowrap;
-        }
-        .data-table td {
-          padding: 11px 14px; border-bottom: 1px solid var(--border);
-          color: var(--text-secondary); vertical-align: middle;
-        }
-        .data-table tr:last-child td { border-bottom: none; }
-        .data-table tr:hover td { background: rgba(255,255,255,.025); }
-        .btn-icon {
-          width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
-          border-radius: var(--radius-sm); border: 1px solid var(--border); cursor: pointer;
-          color: var(--text-muted); transition: all .15s var(--ease-out); background: none;
-        }
-        .btn-icon:hover { color: var(--text-primary); border-color: var(--border-hover); background: var(--bg-hover); }
-        .btn-icon-danger:hover { color: var(--error); border-color: rgba(248,113,113,.3); background: var(--error-dim); }
-        .modal-overlay {
-          position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 500;
-          display: flex; align-items: center; justify-content: center; padding: 20px;
-        }
-        .modal {
-          background: var(--bg-elevated); border: 1px solid var(--border);
-          border-radius: var(--radius-lg); padding: 24px; max-width: 380px; width: 100%;
-          box-shadow: 0 24px 80px rgba(0,0,0,.6);
-        }
-        .modal h3 { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
-        .form-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px; }
-        .kas-balance-card {
-          background: var(--bg-card); border: 1px solid var(--border);
-          border-radius: var(--radius-md); padding: 24px 28px;
-        }
-        @media (max-width: 640px) {
-          .form-row { grid-template-columns: 1fr; }
-          [style*="grid-template-columns: 1fr 1.5fr"] { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
-
-      {/* Header */}
-      <div className="dashboard-header">
-        <div className="dashboard-header-left">
-          <span className="dashboard-breadcrumb">Dashboard / Data Operasional</span>
-          <span className="dashboard-page-title">Penjualan & Kas</span>
-        </div>
-      </div>
-
+      <PageHeader section="Data operasional" title="Penjualan & Kas" />
       <div className="dashboard-content">
-        {/* Tab navigation */}
-        <div className="tab-nav" role="tablist">
-          {TABS.map(t => (
-            <button
-              key={t.id}
-              role="tab"
-              aria-selected={activeTab === t.id}
-              className={`tab-btn${activeTab === t.id ? ' active' : ''}`}
-              onClick={() => setActiveTab(t.id)}
-              id={`tab-${t.id}`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab content */}
-        {activeTab === 'penjualan' && (
-          <TabPenjualan sales={initialSales} onToast={showToast} />
-        )}
-        {activeTab === 'kas' && (
-          <TabKas cash={initialCash} cashLog={initialCashLog} onToast={showToast} />
-        )}
-        {activeTab === 'hpp' && (
-          <TabHpp hpp={initialHpp} onToast={showToast} />
-        )}
+        <Tabs tabs={TABS} active={tab} onChange={setTab} label="Bagian penjualan & kas" />
+        <TabPanel id="penjualan" active={tab}><TabPenjualan sales={initialSales} toast={toast} /></TabPanel>
+        <TabPanel id="kas" active={tab}><TabKas cash={initialCash} cashLog={initialCashLog} toast={toast} /></TabPanel>
+        <TabPanel id="hpp" active={tab}><TabHpp hpp={initialHpp} toast={toast} /></TabPanel>
       </div>
-
-      {/* Toast */}
-      {toast && (
-        <Toast
-          key={toast.key}
-          msg={toast.msg}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toastEl}
     </>
   )
 }

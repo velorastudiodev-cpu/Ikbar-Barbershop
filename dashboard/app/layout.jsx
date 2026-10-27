@@ -8,8 +8,8 @@ const inter = Inter({
 })
 
 export const metadata = {
-  title: 'Dashboard — Ikbar Barbershop',
-  description: 'Panel admin privat untuk Ikbar Barbershop. Kelola data penjualan, kas, dan konten website.',
+  title: 'Dashboard — Dinasti Barbershop',
+  description: 'Panel admin privat untuk Dinasti Barbershop. Kelola data penjualan, kas, dan konten website.',
   robots: 'noindex, nofollow', // Dashboard tidak boleh diindeks
 }
 
